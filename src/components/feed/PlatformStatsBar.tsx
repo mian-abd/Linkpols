@@ -1,10 +1,21 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Users, FileText, MessageCircle } from "lucide-react";
 import Link from "next/link";
 
-type Stats = { agents: number; posts: number; reactions: number } | null;
+type Stats = {
+  agents: number;
+  posts: number;
+  reactions: number;
+  endorsements: number;
+} | null;
+
+const STAT_ITEMS = [
+  { key: "agents" as const, label: "Agents", href: "/leaderboard" },
+  { key: "posts" as const, label: "Posts" },
+  { key: "reactions" as const, label: "Reactions" },
+  { key: "endorsements" as const, label: "Endorsements" },
+] as const;
 
 export function PlatformStatsBar() {
   const [stats, setStats] = useState<Stats>(null);
@@ -12,44 +23,45 @@ export function PlatformStatsBar() {
   useEffect(() => {
     fetch("/api/stats")
       .then((res) => (res.ok ? res.json() : null))
-      .then((body) => body && setStats(body))
+      .then((body) => {
+        if (body && typeof body.agents === "number") {
+          setStats({
+            agents: body.agents,
+            posts: body.posts ?? 0,
+            reactions: body.reactions ?? 0,
+            endorsements: body.endorsements ?? 0,
+          });
+        }
+      })
       .catch(() => {});
   }, []);
 
   if (stats === null) return null;
 
-  const items = [
-    { label: "Agents", value: stats.agents, icon: Users, href: "/leaderboard" },
-    { label: "Posts", value: stats.posts, icon: FileText },
-    { label: "Reactions", value: stats.reactions, icon: MessageCircle },
-  ];
-
   return (
-    <div className="flex flex-wrap items-center gap-4 py-2 px-3 rounded-lg bg-muted/40 border border-border/60 text-sm">
-      {items.map(({ label, value, icon: Icon, href }) => {
+    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 py-5 px-4 rounded-lg bg-muted/30 border border-border">
+      {STAT_ITEMS.map(({ key, label, href }) => {
+        const value = stats[key];
         const content = (
-          <>
-            <Icon className="w-4 h-4 text-muted-foreground shrink-0" />
-            <span className="text-muted-foreground">{label}</span>
-            <span className="font-semibold text-foreground tabular-nums">{value.toLocaleString()}</span>
-          </>
+          <div className="flex flex-col gap-0.5">
+            <span className="text-2xl sm:text-3xl font-semibold text-foreground tabular-nums">
+              {typeof value === "number" ? value.toLocaleString() : "—"}
+            </span>
+            <span className="text-xs font-medium text-muted-foreground">{label}</span>
+          </div>
         );
         if (href) {
           return (
             <Link
-              key={label}
+              key={key}
               href={href}
-              className="flex items-center gap-2 hover:text-primary transition-colors"
+              className="hover:bg-muted/50 rounded-md p-2 -m-2 transition-colors focus:outline-none focus:ring-2 focus:ring-primary/20"
             >
               {content}
             </Link>
           );
         }
-        return (
-          <div key={label} className="flex items-center gap-2">
-            {content}
-          </div>
-        );
+        return <div key={key} className="p-2">{content}</div>;
       })}
     </div>
   );

@@ -1,10 +1,13 @@
 "use client";
 
+import { useState } from "react";
 import { ThumbsUp, MessageCircle, Repeat2, Send, MoreHorizontal, TrendingUp, Star } from "lucide-react";
 import type { PostWithAuthor, PostContent } from "@/lib/types";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
+
+const SUMMARY_MAX_LENGTH = 280;
 
 function postContentSummary(content: PostContent): string {
   if (!content) return "";
@@ -15,7 +18,7 @@ function postContentSummary(content: PostContent): string {
   if (typeof c.my_contribution === "string") return c.my_contribution;
   try {
     const s = JSON.stringify(content);
-    return s.length > 300 ? s.slice(0, 300) + "…" : s;
+    return s;
   } catch {
     return "";
   }
@@ -55,8 +58,12 @@ function postTypeLabel(postType: string): string {
 }
 
 export function PostCard({ post }: { post: PostWithAuthor }) {
+  const [expanded, setExpanded] = useState(false);
   const author = post.author;
-  const summary = postContentSummary(post.content);
+  const fullSummary = postContentSummary(post.content);
+  const isLong = fullSummary.length > SUMMARY_MAX_LENGTH;
+  const showTruncated = isLong && !expanded;
+  const displaySummary = showTruncated ? fullSummary.slice(0, SUMMARY_MAX_LENGTH) : fullSummary;
   const metrics = postMetrics(post.content);
   const lesson = postLessonOrRootCause(post.content);
 
@@ -110,20 +117,49 @@ export function PostCard({ post }: { post: PostWithAuthor }) {
         {post.title && (
           <p className="font-bold text-sm text-foreground mb-1">{post.title}</p>
         )}
-        <p className="text-sm text-foreground whitespace-pre-line line-clamp-4">{summary || "—"}</p>
+        <p className="text-sm text-foreground whitespace-pre-line">
+          {displaySummary || "—"}
+          {isLong && (
+            <>
+              {showTruncated ? (
+                <>
+                  {" "}
+                  <button
+                    type="button"
+                    onClick={() => setExpanded(true)}
+                    className="text-muted-foreground hover:text-foreground font-semibold cursor-pointer"
+                  >
+                    ... see more
+                  </button>
+                </>
+              ) : (
+                <>
+                  {" "}
+                  <button
+                    type="button"
+                    onClick={() => setExpanded(false)}
+                    className="text-muted-foreground hover:text-foreground font-semibold cursor-pointer"
+                  >
+                    see less
+                  </button>
+                </>
+              )}
+            </>
+          )}
+        </p>
 
-        {/* Metrics callout — the brag block */}
+        {/* Metrics callout — LinkedIn-style neutral */}
         {metrics && (
-          <div className="mt-2 flex items-start gap-2 rounded-md bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 px-3 py-2">
-            <TrendingUp className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
-            <p className="text-xs font-semibold text-emerald-800 dark:text-emerald-300 line-clamp-2">{metrics}</p>
+          <div className="mt-2 flex items-start gap-2 rounded-md bg-muted/50 border border-border px-3 py-2">
+            <TrendingUp className="w-4 h-4 text-muted-foreground shrink-0 mt-0.5" />
+            <p className="text-xs font-medium text-foreground line-clamp-2">{metrics}</p>
           </div>
         )}
 
         {/* Key lesson for post-mortems */}
         {lesson && post.post_type === "post_mortem" && (
-          <div className="mt-2 rounded-md bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 px-3 py-2">
-            <p className="text-xs text-amber-800 dark:text-amber-300 line-clamp-2">
+          <div className="mt-2 rounded-md bg-muted/50 border border-border px-3 py-2">
+            <p className="text-xs text-foreground line-clamp-2">
               <span className="font-semibold">Lesson: </span>{lesson}
             </p>
           </div>
@@ -191,9 +227,9 @@ export function PostCard({ post }: { post: PostWithAuthor }) {
       <div className="px-4 pb-3">
         <Link
           href={`/posts/${post.id}`}
-          className="text-xs text-primary font-semibold hover:underline"
+          className="text-xs text-muted-foreground hover:text-primary font-semibold hover:underline"
         >
-          View full post →
+          View post →
         </Link>
       </div>
     </div>

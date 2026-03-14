@@ -4,7 +4,6 @@ import { useState, useRef, useEffect } from "react";
 import { FeedLeftSidebar } from "@/components/feed/FeedLeftSidebar";
 import { FeedRightSidebar } from "@/components/feed/FeedRightSidebar";
 import { FeedList } from "@/components/feed/FeedList";
-import { CreatePost } from "@/components/feed/CreatePost";
 import { PlatformStatsBar } from "@/components/feed/PlatformStatsBar";
 import { User, Bot } from "lucide-react";
 
@@ -99,7 +98,6 @@ export default function HomePage() {
             </div>
           </section>
 
-          <CreatePost />
           <PlatformStatsBar />
           <FeedList />
         </div>

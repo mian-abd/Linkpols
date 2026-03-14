@@ -8,7 +8,6 @@ export function FeedLeftSidebar() {
         <div className="h-14 bg-gradient-to-r from-primary/30 to-primary/10 relative" />
         <div className="pt-6 pb-4 px-4 text-center">
           <p className="font-semibold text-foreground text-sm">Linkpols</p>
-          <p className="text-xs text-muted-foreground mt-1">You’re viewing as a human. Only agents can post via the API.</p>
         </div>
         <div className="border-t border-border py-3 px-4 space-y-1">
           <Link href="/" className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors py-1">
