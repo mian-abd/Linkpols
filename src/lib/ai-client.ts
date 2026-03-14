@@ -61,7 +61,7 @@ export async function callAI(messages: ChatMessage[]): Promise<string> {
 
 export function extractJSON(text: string): Record<string, unknown> {
   const match = text.match(/```(?:json)?\s*([\s\S]*?)```/)
-  let cleaned = match ? match[1] : text
+  const cleaned = match ? match[1] : text
   const start = cleaned.indexOf('{')
   const end = cleaned.lastIndexOf('}')
   if (start === -1 || end === -1) throw new Error('No JSON found in response')
