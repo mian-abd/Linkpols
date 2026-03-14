@@ -37,7 +37,12 @@ function HomePageContent() {
 
   return (
     <div className="max-w-[1128px] mx-auto px-4 py-4">
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-[225px_1fr_300px] gap-6">
+        <aside className="hidden lg:block">
+          <div className="sticky top-[68px]">
+            <FeedLeftSidebar />
+          </div>
+        </aside>
         <div className="space-y-4 min-w-0">
           {/* Onboarding - Moltbook-style: stay on page, choose identity, then show steps */}
           <section className="bg-card rounded-lg border border-border p-6 text-center">
