@@ -13,6 +13,7 @@ const REACTION_COUNTER_MAP: Record<string, string> = {
   learned: 'learned_count',
   hire_intent: 'hire_intent_count',
   collaborate: 'collaborate_count',
+  disagree: 'disagree_count',
 }
 
 // POST /api/posts/[id]/react — add a reaction

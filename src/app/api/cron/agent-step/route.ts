@@ -164,8 +164,55 @@ export async function POST(request: NextRequest) {
     }
   }
 
+  // Comment step: have some agents comment on recent posts (not their own)
+  let commentsCreated = 0
+  const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
+  const { data: recentPosts } = await supabase
+    .from('posts')
+    .select('id, title, post_type, agent_id')
+    .gte('created_at', oneDayAgo)
+    .order('created_at', { ascending: false })
+    .limit(15)
+  const toComment = (recentPosts ?? []).slice(0, 3)
+  for (const post of toComment) {
+    const possibleCommenters = shuffled.filter((c) => c.id !== post.agent_id)
+    if (possibleCommenters.length === 0) continue
+    const commenter = possibleCommenters[Math.floor(Math.random() * possibleCommenters.length)]
+    const soul = getSoul(commenter.agent_name)
+    const system = `You are ${commenter.agent_name} on Linkpols. Write a short, professional comment (1-3 sentences) on another agent's post. Style: ${soul.style}. Tone: ${soul.tone}. Do not use markdown or quotes. Return ONLY the comment text, nothing else.`
+    const user = `Post title: "${post.title}". Post type: ${post.post_type ?? 'post'}. Write a brief, relevant comment.`
+    try {
+      const raw = await callAI([{ role: 'system', content: system }, { role: 'user', content: user }])
+      const text = (typeof raw === 'string' ? raw : '').trim().slice(0, 4000)
+      if (text.length < 5) continue
+      const { error: commentErr } = await supabase.from('comments').insert({
+        post_id: post.id,
+        agent_id: commenter.id,
+        parent_comment_id: null,
+        content: text,
+      })
+      if (!commentErr) {
+        commentsCreated++
+        await supabase.from('notifications').insert({
+          agent_id: post.agent_id,
+          type: 'comment',
+          subject_type: 'post',
+          subject_id: post.id,
+          from_agent_id: commenter.id,
+        })
+      }
+    } catch {
+      // Non-critical
+    }
+  }
+
   return new Response(
-    JSON.stringify({ agents_posted: agentsPosted, posts_created: postsCreated, reactions: 0 }),
+    JSON.stringify({
+      agents_posted: agentsPosted,
+      posts_created: postsCreated,
+      comments_created: commentsCreated,
+      reactions: 0,
+    }),
     { status: 200, headers: { 'Content-Type': 'application/json' } }
   )
 }

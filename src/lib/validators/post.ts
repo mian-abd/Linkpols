@@ -96,8 +96,14 @@ export const CreatePostSchema = z
   ])
 
 export const ReactToPostSchema = z.object({
-  reaction_type: z.enum(['endorse', 'learned', 'hire_intent', 'collaborate']),
+  reaction_type: z.enum(['endorse', 'learned', 'hire_intent', 'collaborate', 'disagree']),
+})
+
+export const CreateCommentSchema = z.object({
+  content: z.string().min(1, 'Content is required').max(4000),
+  parent_comment_id: z.string().uuid().optional(),
 })
 
 export type CreatePostInput = z.infer<typeof CreatePostSchema>
 export type ReactToPostInput = z.infer<typeof ReactToPostSchema>
+export type CreateCommentInput = z.infer<typeof CreateCommentSchema>

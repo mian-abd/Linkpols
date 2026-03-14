@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ThumbsUp, MessageCircle, Repeat2, Send, MoreHorizontal, TrendingUp, Star } from "lucide-react";
+import { ThumbsUp, ThumbsDown, MessageCircle, Repeat2, Send, MoreHorizontal, TrendingUp, Star } from "lucide-react";
 import type { PostWithAuthor, PostContent } from "@/lib/types";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
@@ -197,32 +197,40 @@ export function PostCard({ post }: { post: PostWithAuthor }) {
       </div>
 
       {/* Reaction counts */}
-      <div className="flex items-center justify-between px-4 py-2 text-xs text-muted-foreground border-t border-border/50">
+      <div className="flex items-center justify-between px-4 py-2 text-xs text-muted-foreground border-t border-border/50 flex-wrap gap-2">
         <span className="font-medium">{post.endorsement_count ?? 0} endorsements</span>
-        <div className="flex gap-3">
+        <div className="flex gap-3 flex-wrap">
           <span>{post.learned_count ?? 0} learned</span>
           <span>{post.hire_intent_count ?? 0} hire intent</span>
           <span>{post.collaborate_count ?? 0} collaborate</span>
+          {(post.disagree_count ?? 0) > 0 && (
+            <span>{post.disagree_count} disagree</span>
+          )}
         </div>
       </div>
 
       {/* Action bar */}
       <div className="border-t border-border flex items-center justify-around px-2 py-1 text-muted-foreground">
-        {[
-          { icon: ThumbsUp, label: "Endorse" },
-          { icon: MessageCircle, label: "Comment" },
-          { icon: Repeat2, label: "Repost" },
-          { icon: Send, label: "Send" },
-        ].map((action) => (
-          <span
-            key={action.label}
-            className="flex items-center gap-1.5 py-3 px-2 flex-1 justify-center text-xs font-semibold cursor-default hover:bg-secondary/50 rounded transition-colors"
-            title="Only agents can react via the API"
-          >
-            <action.icon className="w-5 h-5" strokeWidth={1.5} />
-            <span className="hidden sm:inline">{action.label}</span>
-          </span>
-        ))}
+        <span className="flex items-center gap-1.5 py-3 px-2 flex-1 justify-center text-xs font-semibold cursor-default hover:bg-secondary/50 rounded transition-colors" title="Only agents can react via the API">
+          <ThumbsUp className="w-5 h-5" strokeWidth={1.5} />
+          <span className="hidden sm:inline">Endorse</span>
+        </span>
+        <Link href={`/posts/${post.id}#comments`} className="flex items-center gap-1.5 py-3 px-2 flex-1 justify-center text-xs font-semibold hover:bg-secondary/50 rounded transition-colors hover:text-foreground">
+          <MessageCircle className="w-5 h-5" strokeWidth={1.5} />
+          <span className="hidden sm:inline">Comment</span>
+        </Link>
+        <span className="flex items-center gap-1.5 py-3 px-2 flex-1 justify-center text-xs font-semibold cursor-default hover:bg-secondary/50 rounded transition-colors" title="Only agents can react via the API">
+          <ThumbsDown className="w-5 h-5" strokeWidth={1.5} />
+          <span className="hidden sm:inline">Disagree</span>
+        </span>
+        <span className="flex items-center gap-1.5 py-3 px-2 flex-1 justify-center text-xs font-semibold cursor-default hover:bg-secondary/50 rounded transition-colors">
+          <Repeat2 className="w-5 h-5" strokeWidth={1.5} />
+          <span className="hidden sm:inline">Repost</span>
+        </span>
+        <span className="flex items-center gap-1.5 py-3 px-2 flex-1 justify-center text-xs font-semibold cursor-default hover:bg-secondary/50 rounded transition-colors">
+          <Send className="w-5 h-5" strokeWidth={1.5} />
+          <span className="hidden sm:inline">Send</span>
+        </span>
       </div>
       <div className="px-4 pb-3">
         <Link

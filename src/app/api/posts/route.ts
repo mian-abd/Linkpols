@@ -22,13 +22,24 @@ export async function GET(request: NextRequest) {
   const { page, limit, offset } = parsePagination(searchParams)
 
   const post_type = searchParams.get('post_type')
+  const post_types = searchParams.get('post_types')?.split(',').map((t) => t.trim()).filter(Boolean)
   const agent_id = searchParams.get('agent_id')
+  const follower_id = searchParams.get('follower_id') // When set, only posts from agents this agent follows
   const tag = searchParams.get('tag')
   const sort = searchParams.get('sort') || 'created_at'
 
   // Validate params
   if (post_type && !VALID_POST_TYPES.includes(post_type)) {
     return errorResponse(`post_type must be one of: ${VALID_POST_TYPES.join(', ')}`, 400)
+  }
+  if (post_types?.length) {
+    const invalid = post_types.filter((t) => !VALID_POST_TYPES.includes(t))
+    if (invalid.length) {
+      return errorResponse(`post_types must be among: ${VALID_POST_TYPES.join(', ')}`, 400)
+    }
+  }
+  if (follower_id && !/^[0-9a-f-]{36}$/i.test(follower_id)) {
+    return errorResponse('follower_id must be a valid UUID', 400)
   }
   if (sort && !VALID_SORT.includes(sort)) {
     return errorResponse(`sort must be one of: ${VALID_SORT.join(', ')}`, 400)
@@ -57,8 +68,24 @@ export async function GET(request: NextRequest) {
     .order(sort, { ascending: false })
     .range(offset, offset + limit - 1)
 
-  if (post_type) query = query.eq('post_type', post_type)
+  if (post_types?.length) query = query.in('post_type', post_types)
+  else if (post_type) query = query.eq('post_type', post_type)
   if (agent_id) query = query.eq('agent_id', agent_id)
+  if (follower_id) {
+    const { data: followingIds } = await supabase
+      .from('agent_connections')
+      .select('following_id')
+      .eq('follower_id', follower_id)
+    const ids = (followingIds ?? []).map((r) => r.following_id).filter(Boolean)
+    if (ids.length === 0) {
+      return jsonResponse(
+        { data: [], pagination: { page, limit, total: 0, has_more: false } },
+        200,
+        { 'Cache-Control': 'public, s-maxage=30' }
+      )
+    }
+    query = query.in('agent_id', ids)
+  }
   if (tag) query = query.contains('tags', [tag])
 
   const { data: posts, error, count } = await query

@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { Suspense, useState, useRef, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { FeedLeftSidebar } from "@/components/feed/FeedLeftSidebar";
 import { FeedRightSidebar } from "@/components/feed/FeedRightSidebar";
 import { FeedList } from "@/components/feed/FeedList";
@@ -9,9 +10,23 @@ import { User, Bot } from "lucide-react";
 
 type ViewAs = "human" | "agent";
 
-export default function HomePage() {
+function HomePageContent() {
+  const searchParams = useSearchParams();
+  const viewAsSlug = searchParams.get("view_as");
   const [viewAs, setViewAs] = useState<ViewAs>("human");
+  const [followerId, setFollowerId] = useState<string | null>(null);
   const joinSectionRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (viewAsSlug) {
+      fetch(`/api/agents/${encodeURIComponent(viewAsSlug)}`)
+        .then((res) => (res.ok ? res.json() : null))
+        .then((agent) => agent?.id && setFollowerId(agent.id))
+        .catch(() => setFollowerId(null));
+    } else {
+      setFollowerId(null);
+    }
+  }, [viewAsSlug]);
 
   // When user selects "I'm an Agent", scroll the Join Linkpols box into view (Moltbook-style)
   useEffect(() => {
@@ -99,7 +114,7 @@ export default function HomePage() {
           </section>
 
           <PlatformStatsBar />
-          <FeedList />
+          <FeedList followerId={followerId} />
         </div>
         <aside className="hidden lg:block">
           <div className="sticky top-[68px]">
@@ -108,5 +123,21 @@ export default function HomePage() {
         </aside>
       </div>
     </div>
+  );
+}
+
+export default function HomePage() {
+  return (
+    <Suspense fallback={
+      <div className="max-w-[1128px] mx-auto px-4 py-4">
+        <div className="grid grid-cols-1 lg:grid-cols-[225px_1fr_300px] gap-6">
+          <aside className="hidden lg:block"><div className="sticky top-[68px]"><FeedLeftSidebar /></div></aside>
+          <div className="space-y-4 min-w-0 p-8 text-center text-muted-foreground">Loading…</div>
+          <aside className="hidden lg:block"><div className="sticky top-[68px]"><FeedRightSidebar /></div></aside>
+        </div>
+      </div>
+    }>
+      <HomePageContent />
+    </Suspense>
   );
 }

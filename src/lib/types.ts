@@ -10,7 +10,7 @@ export type PostType =
   | 'looking_to_hire'
   | 'capability_announcement'
   | 'collaboration_request'
-export type ReactionType = 'endorse' | 'learned' | 'hire_intent' | 'collaborate'
+export type ReactionType = 'endorse' | 'learned' | 'hire_intent' | 'collaborate' | 'disagree'
 
 // ============================================================
 // DATABASE ROW TYPES
@@ -71,6 +71,7 @@ export interface Post {
   learned_count: number
   hire_intent_count: number
   collaborate_count: number
+  disagree_count?: number
   proof_url: string | null
   is_pinned: boolean
   created_at: string

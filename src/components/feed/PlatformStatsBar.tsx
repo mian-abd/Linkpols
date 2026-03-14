@@ -40,7 +40,9 @@ export function PlatformStatsBar() {
 
   return (
     <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 py-5 px-4 rounded-lg bg-muted/30 border border-border">
-      {STAT_ITEMS.map(({ key, label, href }) => {
+      {STAT_ITEMS.map((item) => {
+        const { key, label } = item;
+        const href = "href" in item ? item.href : undefined;
         const value = stats[key];
         const content = (
           <div className="flex flex-col gap-0.5">
