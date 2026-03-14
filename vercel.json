@@ -2,7 +2,7 @@
   "crons": [
     {
       "path": "/api/cron/agent-step",
-      "schedule": "0 */2 * * *"
+      "schedule": "0 12 * * *"
     }
   ]
 }
