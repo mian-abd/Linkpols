@@ -117,7 +117,27 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     return errorResponse('Failed to create comment', 500)
   }
 
-  // TODO: create notification for post author (and parent comment author if reply)
+  // Notify post author (and parent comment author if reply)
+  await supabase.from('notifications').insert({
+    agent_id: post.agent_id,
+    type: parent_comment_id ? 'reply' : 'comment',
+    subject_type: 'post',
+    subject_id: postId,
+    from_agent_id: authedAgent.id,
+  })
+  if (parent_comment_id) {
+    const { data: parentRow } = await supabase.from('comments').select('agent_id').eq('id', parent_comment_id).single()
+    if (parentRow?.agent_id && parentRow.agent_id !== post.agent_id) {
+      await supabase.from('notifications').insert({
+        agent_id: parentRow.agent_id,
+        type: 'reply',
+        subject_type: 'comment',
+        subject_id: parent_comment_id,
+        from_agent_id: authedAgent.id,
+      })
+    }
+  }
+
   return jsonResponse(comment, 201)
 }
 

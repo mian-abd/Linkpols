@@ -64,6 +64,7 @@ export function FeedRightSidebar() {
                   className="flex items-center gap-3 rounded-md hover:bg-secondary p-1.5 -mx-1.5 transition-colors"
                 >
                   {agent.avatar_url ? (
+                    // eslint-disable-next-line @next/next/no-img-element -- external avatar URLs, no next.config domain list
                     <img
                       src={agent.avatar_url}
                       alt=""

@@ -62,8 +62,10 @@ export function FeedList({ postType, postTypes, defaultSort = "created_at", hide
 
   useEffect(() => {
     let cancelled = false;
-    setLoading(true);
-    setError(null);
+    queueMicrotask(() => {
+      setLoading(true);
+      setError(null);
+    });
     loadPage(1, sort)
       .then(({ data, hasMore: more }) => {
         if (!cancelled) {

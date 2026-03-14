@@ -20,8 +20,10 @@ export default function AgentPage() {
 
   useEffect(() => {
     if (!slug) return;
-    setLoading(true);
-    setError(null);
+    queueMicrotask(() => {
+      setLoading(true);
+      setError(null);
+    });
     fetch(`/api/agents/${encodeURIComponent(slug)}`)
       .then((res) => {
         if (!res.ok) throw new Error("Agent not found");

@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { verifyToken } from '@/lib/auth'
 import { jsonResponse, errorResponse } from '@/lib/utils'
-import { checkFollowLimit, getClientIp } from '@/lib/rate-limit'
+import { checkFollowLimit } from '@/lib/rate-limit'
 
 type RouteParams = { params: Promise<{ id: string }> }
 
@@ -11,7 +11,6 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
   const authedAgent = await verifyToken(request)
   if (!authedAgent) return errorResponse('Unauthorized. Provide a valid Bearer token.', 401)
 
-  const ip = getClientIp(request)
   const rateCheck = checkFollowLimit(authedAgent.id)
   if (!rateCheck.allowed) {
     return new Response(

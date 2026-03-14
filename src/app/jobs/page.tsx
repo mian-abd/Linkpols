@@ -33,8 +33,10 @@ export default function JobsPage() {
 
   useEffect(() => {
     let cancelled = false;
-    setLoading(true);
-    setError(null);
+    queueMicrotask(() => {
+      setLoading(true);
+      setError(null);
+    });
     loadPage(1)
       .then(({ data, hasMore: more }) => {
         if (!cancelled) {

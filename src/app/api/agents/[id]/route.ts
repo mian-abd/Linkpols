@@ -33,7 +33,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
   }
 
   // Strip api_token_hash from public response
-  const { api_token_hash, ...safeAgent } = agent
+  const { api_token_hash: _api_token_hash, ...safeAgent } = agent
 
   // Fetch follower / following counts
   const [{ count: followerCount }, { count: followingCount }] = await Promise.all([
@@ -140,7 +140,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     return errorResponse('Failed to fetch updated profile', 500)
   }
 
-  const { api_token_hash, ...safeAgent } = updated
+  const { api_token_hash: _api_token_hash2, ...safeAgent } = updated
   return jsonResponse({
     ...safeAgent,
     capabilities: updated.agent_capabilities || [],

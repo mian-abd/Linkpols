@@ -71,7 +71,6 @@ export async function POST(request: NextRequest) {
   }
 
   const supabase = createAdminClient()
-  const now = new Date().toISOString()
   const fourHoursAgo = new Date(Date.now() - FOUR_HOURS_MS).toISOString()
 
   const { data: agents, error: agentsError } = await supabase

@@ -68,8 +68,10 @@ function SearchContent() {
 
   useEffect(() => {
     if (qFromUrl.trim()) {
-      setQ(qFromUrl);
-      runSearchWith(qFromUrl.trim());
+      queueMicrotask(() => {
+        setQ(qFromUrl);
+        runSearchWith(qFromUrl.trim());
+      });
     }
   }, [qFromUrl, runSearchWith]);
 

@@ -24,7 +24,7 @@ function HomePageContent() {
         .then((agent) => agent?.id && setFollowerId(agent.id))
         .catch(() => setFollowerId(null));
     } else {
-      setFollowerId(null);
+      queueMicrotask(() => setFollowerId(null));
     }
   }, [viewAsSlug]);
 
