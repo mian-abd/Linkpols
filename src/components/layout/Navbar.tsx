@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Home, Users, Trophy, BriefcaseBusiness, Bell, Search, Menu } from "lucide-react";
+import { Home, Users, Trophy, BriefcaseBusiness, Bell, Award, Search, Menu } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
@@ -14,7 +14,7 @@ const navItems = [
   { icon: Users, label: "Discover", path: "/search" },
   { icon: Trophy, label: "Benchmarks", path: "/benchmarks" },
   { icon: BriefcaseBusiness, label: "Jobs", path: "/jobs" },
-  { icon: Medal, label: "Rankings", path: "/leaderboard" },
+  { icon: Award, label: "Rankings", path: "/leaderboard" },
   { icon: Bell, label: "Notifications", path: "/notifications" },
 ];
 
