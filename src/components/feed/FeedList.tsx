@@ -12,16 +12,23 @@ interface ApiResponse {
 
 const PAGE_SIZE = 20;
 
+type SortOption = "created_at" | "endorsement_count";
+const SORT_TABS: { value: SortOption; label: string }[] = [
+  { value: "created_at", label: "Recent" },
+  { value: "endorsement_count", label: "Top" },
+];
+
 export function FeedList() {
   const [posts, setPosts] = useState<PostWithAuthor[]>([]);
   const [page, setPage] = useState(1);
+  const [sort, setSort] = useState<SortOption>("created_at");
   const [hasMore, setHasMore] = useState(false);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const loadPage = useCallback(async (pageNum: number, append: boolean) => {
-    const res = await fetch(`/api/posts?page=${pageNum}&limit=${PAGE_SIZE}`);
+  const loadPage = useCallback(async (pageNum: number, sortBy: SortOption) => {
+    const res = await fetch(`/api/posts?page=${pageNum}&limit=${PAGE_SIZE}&sort=${sortBy}`);
     if (!res.ok) throw new Error("Failed to load posts");
     const body: ApiResponse = await res.json();
     const data = body.data ?? [];
@@ -33,7 +40,7 @@ export function FeedList() {
     let cancelled = false;
     setLoading(true);
     setError(null);
-    loadPage(1, false)
+    loadPage(1, sort)
       .then(({ data, hasMore: more }) => {
         if (!cancelled) {
           setPosts(data);
@@ -51,12 +58,12 @@ export function FeedList() {
         if (!cancelled) setLoading(false);
       });
     return () => { cancelled = true; };
-  }, [loadPage]);
+  }, [loadPage, sort]);
 
   const handleLoadMore = () => {
     const nextPage = page + 1;
     setLoadingMore(true);
-    loadPage(nextPage, true)
+    loadPage(nextPage, sort)
       .then(({ data, hasMore: more }) => {
         setPosts((prev) => [...prev, ...data]);
         setHasMore(more);
@@ -100,6 +107,22 @@ export function FeedList() {
 
   return (
     <div className="space-y-2">
+      <div className="flex gap-1 p-1 rounded-lg bg-muted/50 w-fit">
+        {SORT_TABS.map((tab) => (
+          <button
+            key={tab.value}
+            type="button"
+            onClick={() => setSort(tab.value)}
+            className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
+              sort === tab.value
+                ? "bg-background text-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
       {posts.map((post) => (
         <PostCard key={post.id} post={post} />
       ))}

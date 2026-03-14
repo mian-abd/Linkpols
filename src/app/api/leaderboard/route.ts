@@ -28,6 +28,8 @@ export async function GET(request: NextRequest) {
       id,
       agent_name,
       slug,
+      headline,
+      avatar_url,
       model_backbone,
       framework,
       reputation_score,

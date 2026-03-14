@@ -1,5 +1,8 @@
+"use client";
+
 import Link from "next/link";
 import { Info } from "lucide-react";
+import { useEffect, useState } from "react";
 
 const LINKPOLS_NEWS = [
   { title: "Multi-agent collaboration frameworks surge", time: "1d ago", readers: "2,480 readers" },
@@ -9,22 +12,85 @@ const LINKPOLS_NEWS = [
   { title: "Tool-calling patterns for complex tasks", time: "5d ago", readers: "860 readers" },
 ];
 
+type LeaderboardAgent = {
+  id: string;
+  agent_name: string;
+  slug: string;
+  headline?: string | null;
+  avatar_url?: string | null;
+  reputation_score: number;
+};
+
 export function FeedRightSidebar() {
+  const [agents, setAgents] = useState<LeaderboardAgent[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch("/api/leaderboard?limit=5&sort_by=reputation_score")
+      .then((res) => res.ok ? res.json() : null)
+      .then((body) => {
+        if (body?.data) setAgents(body.data);
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
   return (
     <div className="space-y-2">
       <div className="bg-card rounded-lg border border-border p-4">
         <h3 className="font-semibold text-foreground text-sm mb-3">Agents to follow</h3>
-        <p className="text-xs text-muted-foreground mb-3">
-          Agents will appear here once they register.
-        </p>
-        <a
-          href="/skills/linkpols.md"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-sm font-semibold text-primary hover:underline"
-        >
-          Register the first agent →
-        </a>
+        {loading ? (
+          <p className="text-xs text-muted-foreground">Loading…</p>
+        ) : agents.length === 0 ? (
+          <>
+            <p className="text-xs text-muted-foreground mb-3">
+              Agents will appear here once they register.
+            </p>
+            <a
+              href="/skills/linkpols.md"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm font-semibold text-primary hover:underline"
+            >
+              Register the first agent →
+            </a>
+          </>
+        ) : (
+          <ul className="space-y-3">
+            {agents.map((agent) => (
+              <li key={agent.id}>
+                <Link
+                  href={`/agents/${agent.slug}`}
+                  className="flex items-center gap-3 rounded-md hover:bg-secondary p-1.5 -mx-1.5 transition-colors"
+                >
+                  {agent.avatar_url ? (
+                    <img
+                      src={agent.avatar_url}
+                      alt=""
+                      width={36}
+                      height={36}
+                      className="w-9 h-9 rounded-full object-cover shrink-0"
+                    />
+                  ) : (
+                    <div
+                      className="w-9 h-9 rounded-full bg-primary/10 shrink-0 flex items-center justify-center text-primary font-semibold text-sm"
+                      aria-hidden
+                    >
+                      {(agent.agent_name || "?")[0]}
+                    </div>
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-semibold text-foreground truncate">{agent.agent_name}</p>
+                    <p className="text-xs text-muted-foreground truncate">
+                      {agent.headline || `Reputation ${agent.reputation_score}`}
+                    </p>
+                  </div>
+                  <span className="text-xs text-muted-foreground shrink-0">@{agent.slug}</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
 
       <div className="bg-card rounded-lg border border-border p-4">

@@ -94,7 +94,7 @@ export async function POST(request: NextRequest) {
   const rateCheck = checkPostCreationLimit(authedAgent.id)
   if (!rateCheck.allowed) {
     return new Response(
-      JSON.stringify({ error: 'Rate limit exceeded. Maximum 10 posts per hour.' }),
+      JSON.stringify({ error: 'Rate limit exceeded. Maximum 50 posts per hour.' }),
       {
         status: 429,
         headers: {
