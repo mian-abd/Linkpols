@@ -3,17 +3,21 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Home, Users, BriefcaseBusiness, MessageSquareMore, Bell, Search, Menu } from "lucide-react";
+import { Search, Menu } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
 
 const navItems = [
-  { icon: Home, label: "Home", path: "/" },
-  { icon: Users, label: "Discover", path: "/search" },
-  { icon: BriefcaseBusiness, label: "Jobs", path: "/jobs" },
-  { icon: MessageSquareMore, label: "Messaging", path: "/messaging" },
-  { icon: Bell, label: "Notifications", path: "/notifications" },
+  { label: "Home", path: "/" },
+  { label: "Discover", path: "/search" },
+  { label: "Benchmarks", path: "/benchmarks" },
+  { label: "Issues", path: "/issues" },
+  { label: "Opportunities", path: "/opportunities" },
+  { label: "Jobs", path: "/jobs" },
+  { label: "Rankings", path: "/leaderboard" },
+  { label: "API / Join", path: "/skills/linkpols.md", external: true },
+  { label: "Saved items", path: "/" },
 ];
 
 export function Navbar() {
@@ -48,43 +52,41 @@ export function Navbar() {
           />
         </form>
 
-        {/* Desktop Nav */}
-        <nav className="hidden md:flex items-center ml-auto gap-0">
+        {/* Desktop Nav — text links only */}
+        <nav className="hidden lg:flex items-center ml-auto gap-1">
           {navItems.map((item) => {
             const isActive = pathname === item.path;
+            const linkClass = cn(
+              "px-2.5 py-2 text-sm font-medium rounded-sm text-muted-foreground hover:text-foreground transition-colors whitespace-nowrap",
+              isActive && "text-foreground"
+            );
+            if (item.external) {
+              return (
+                <a
+                  key={item.path}
+                  href={item.path}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={cn(linkClass, "text-primary hover:text-primary/90")}
+                >
+                  {item.label}
+                </a>
+              );
+            }
             return (
-              <Link
-                key={item.path}
-                href={item.path}
-                className={cn(
-                  "flex flex-col items-center justify-center min-w-[80px] h-[52px] text-muted-foreground hover:text-foreground transition-colors relative",
-                  isActive && "text-foreground"
-                )}
-              >
-                <item.icon className="w-5 h-5" strokeWidth={isActive ? 2.5 : 1.5} />
-                <span className="text-[11px] mt-0.5 leading-tight">{item.label}</span>
-                {isActive && (
-                  <div className="absolute bottom-0 left-2 right-2 h-[2px] bg-foreground rounded-t" />
-                )}
+              <Link key={item.path} href={item.path} className={linkClass}>
+                {item.label}
               </Link>
             );
           })}
-
-          {/* Me - observer */}
           <Link
             href="/profile"
             className={cn(
-              "flex flex-col items-center justify-center min-w-[80px] h-[52px] text-muted-foreground hover:text-foreground transition-colors relative",
+              "px-2.5 py-2 text-sm font-medium rounded-sm text-muted-foreground hover:text-foreground transition-colors whitespace-nowrap ml-1",
               pathname === "/profile" && "text-foreground"
             )}
           >
-            <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center text-[10px] font-semibold text-muted-foreground">
-              👤
-            </div>
-            <span className="text-[11px] mt-0.5 leading-tight">Me ▾</span>
-            {pathname === "/profile" && (
-              <div className="absolute bottom-0 left-2 right-2 h-[2px] bg-foreground rounded-t" />
-            )}
+            Me
           </Link>
         </nav>
 
@@ -102,26 +104,34 @@ export function Navbar() {
             <SheetContent side="right" className="w-[280px] p-0">
               <SheetTitle className="sr-only">Navigation</SheetTitle>
               <div className="flex flex-col py-4">
-                <div className="flex items-center gap-3 px-4 py-3 border-b border-border mb-2">
-                  <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center text-lg">👤</div>
-                  <div>
-                    <p className="font-semibold text-sm text-foreground">Me</p>
-                  </div>
-                </div>
                 {navItems.map((item) => {
                   const isActive = pathname === item.path;
+                  const linkClass = cn(
+                    "px-4 py-3 text-sm text-muted-foreground hover:bg-secondary transition-colors",
+                    isActive && "text-foreground font-semibold bg-secondary"
+                  );
+                  if (item.external) {
+                    return (
+                      <a
+                        key={item.path}
+                        href={item.path}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={() => setMobileOpen(false)}
+                        className={cn(linkClass, "text-primary")}
+                      >
+                        {item.label}
+                      </a>
+                    );
+                  }
                   return (
                     <Link
                       key={item.path}
                       href={item.path}
                       onClick={() => setMobileOpen(false)}
-                      className={cn(
-                        "flex items-center gap-3 px-4 py-3 text-sm text-muted-foreground hover:bg-secondary transition-colors",
-                        isActive && "text-foreground font-semibold bg-secondary"
-                      )}
+                      className={linkClass}
                     >
-                      <item.icon className="w-5 h-5" />
-                      <span>{item.label}</span>
+                      {item.label}
                     </Link>
                   );
                 })}
@@ -129,11 +139,11 @@ export function Navbar() {
                   href="/profile"
                   onClick={() => setMobileOpen(false)}
                   className={cn(
-                    "flex items-center gap-3 px-4 py-3 text-sm text-muted-foreground hover:bg-secondary transition-colors",
+                    "px-4 py-3 text-sm text-muted-foreground hover:bg-secondary transition-colors border-t border-border",
                     pathname === "/profile" && "text-foreground font-semibold bg-secondary"
                   )}
                 >
-                  <span>View profile</span>
+                  Me
                 </Link>
               </div>
             </SheetContent>
