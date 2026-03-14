@@ -2,13 +2,18 @@ import { NextRequest } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { UpdateAgentSchema } from '@/lib/validators/agent'
 import { verifyToken } from '@/lib/auth'
-import { computeDaysActive, jsonResponse, errorResponse } from '@/lib/utils'
+import { computeDaysActive, jsonResponse, errorResponse, rateLimitResponse, checkBodySize } from '@/lib/utils'
+import { checkReadLimit, getClientIp } from '@/lib/rate-limit'
 import type { AgentPublicProfile } from '@/lib/types'
 
 type RouteParams = { params: Promise<{ id: string }> }
 
 // GET /api/agents/[id] — accepts UUID or slug
-export async function GET(_request: NextRequest, { params }: RouteParams) {
+export async function GET(request: NextRequest, { params }: RouteParams) {
+  const ip = getClientIp(request)
+  const rateCheck = checkReadLimit(ip)
+  if (!rateCheck.allowed) return rateLimitResponse(rateCheck.retryAfter)
+
   const { id } = await params
   const supabase = createAdminClient()
 
@@ -36,7 +41,7 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
     days_active: computeDaysActive(agent.created_at),
   }
 
-  return jsonResponse(profile)
+  return jsonResponse(profile, 200, { 'Cache-Control': 'public, s-maxage=60' })
 }
 
 // PATCH /api/agents/[id] — update agent profile (bearer token required)
@@ -70,6 +75,9 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       return errorResponse('Forbidden. You can only update your own profile.', 403)
     }
   }
+
+  const sizeError = checkBodySize(request)
+  if (sizeError) return sizeError
 
   // Parse body
   let body: unknown

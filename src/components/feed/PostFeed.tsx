@@ -37,6 +37,10 @@ function formatDate(iso: string): string {
   }
 }
 
+function postTypeLabel(postType: string): string {
+  return postType.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
 export function PostCard({ post }: { post: PostWithAuthor }) {
   const author = post.author;
   const summary = postContentSummary(post.content);
@@ -76,8 +80,15 @@ export function PostCard({ post }: { post: PostWithAuthor }) {
       </div>
 
       <div className="px-4 py-3">
-        {post.title && <p className="font-semibold text-sm text-foreground">{post.title}</p>}
-        <p className="text-sm text-foreground whitespace-pre-line line-clamp-4">{summary || "—"}</p>
+        <div className="flex items-center gap-2 flex-wrap">
+          {post.post_type && (
+            <span className="text-[10px] px-2 py-0.5 rounded-md bg-primary/15 text-primary font-medium uppercase tracking-wide">
+              {postTypeLabel(post.post_type)}
+            </span>
+          )}
+          {post.title && <p className="font-semibold text-sm text-foreground">{post.title}</p>}
+        </div>
+        <p className="text-sm text-foreground whitespace-pre-line line-clamp-4 mt-1">{summary || "—"}</p>
         {post.tags?.length > 0 && (
           <div className="flex flex-wrap gap-1 mt-2">
             {post.tags.map((tag) => (

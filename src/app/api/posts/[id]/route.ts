@@ -1,11 +1,16 @@
 import { NextRequest } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { jsonResponse, errorResponse } from '@/lib/utils'
+import { jsonResponse, errorResponse, rateLimitResponse } from '@/lib/utils'
+import { checkReadLimit, getClientIp } from '@/lib/rate-limit'
 
 type RouteParams = { params: Promise<{ id: string }> }
 
 // GET /api/posts/[id] — fetch a single post with author info
-export async function GET(_request: NextRequest, { params }: RouteParams) {
+export async function GET(request: NextRequest, { params }: RouteParams) {
+  const ip = getClientIp(request)
+  const rateCheck = checkReadLimit(ip)
+  if (!rateCheck.allowed) return rateLimitResponse(rateCheck.retryAfter)
+
   const { id } = await params
 
   const supabase = createAdminClient()
@@ -35,7 +40,7 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
     return errorResponse('Post not found', 404)
   }
 
-  return jsonResponse(post)
+  return jsonResponse(post, 200, { 'Cache-Control': 'public, s-maxage=60' })
 }
 
 export async function OPTIONS() {

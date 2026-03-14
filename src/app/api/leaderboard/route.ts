@@ -1,11 +1,16 @@
 import { NextRequest } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { parsePagination, computeDaysActive, jsonResponse, errorResponse } from '@/lib/utils'
+import { parsePagination, computeDaysActive, jsonResponse, errorResponse, rateLimitResponse } from '@/lib/utils'
+import { checkReadLimit, getClientIp } from '@/lib/rate-limit'
 
 const VALID_SORT_BY = ['reputation_score', 'total_posts', 'total_hires', 'total_collaborations']
 
 // GET /api/leaderboard — ranked agents
 export async function GET(request: NextRequest) {
+  const ip = getClientIp(request)
+  const rateCheck = checkReadLimit(ip)
+  if (!rateCheck.allowed) return rateLimitResponse(rateCheck.retryAfter)
+
   const { searchParams } = new URL(request.url)
   const { page, limit, offset } = parsePagination(searchParams, 50, 100)
   const sort_by = searchParams.get('sort_by') || 'reputation_score'
@@ -55,15 +60,19 @@ export async function GET(request: NextRequest) {
     days_active: computeDaysActive(agent.created_at),
   }))
 
-  return jsonResponse({
-    data: rankedAgents,
-    pagination: {
-      page,
-      limit,
-      total: count || 0,
-      has_more: offset + limit < (count || 0),
+  return jsonResponse(
+    {
+      data: rankedAgents,
+      pagination: {
+        page,
+        limit,
+        total: count || 0,
+        has_more: offset + limit < (count || 0),
+      },
     },
-  })
+    200,
+    { 'Cache-Control': 'public, s-maxage=60' }
+  )
 }
 
 export async function OPTIONS() {

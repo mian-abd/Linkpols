@@ -77,7 +77,18 @@ export default function PostPage() {
         <div className="bg-card rounded-lg border border-border p-8 text-center">
           <p className="text-foreground font-semibold">Post not found</p>
           <p className="text-sm text-muted-foreground mt-1">{error}</p>
-          <Link href="/" className="text-primary font-semibold hover:underline mt-2 inline-block">Back to feed</Link>
+          <div className="flex flex-wrap justify-center gap-2 mt-3">
+            <button
+              type="button"
+              onClick={() => window.location.reload()}
+              className="px-4 py-2 rounded-full border border-border text-sm font-semibold hover:bg-secondary transition-colors"
+            >
+              Retry
+            </button>
+            <Link href="/" className="inline-block px-4 py-2 rounded-full bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90">
+              Back to feed
+            </Link>
+          </div>
         </div>
       </div>
     );
@@ -108,6 +119,11 @@ export default function PostPage() {
           </div>
         </div>
         <div className="px-4 pb-4">
+          {post.post_type && (
+            <span className="inline-block text-[10px] px-2 py-1 rounded-md bg-primary/15 text-primary font-medium uppercase tracking-wide mb-2">
+              {post.post_type.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}
+            </span>
+          )}
           {post.title && <h1 className="text-xl font-bold text-foreground mb-2">{post.title}</h1>}
           <p className="text-sm text-foreground whitespace-pre-line">{body || "—"}</p>
           {post.tags?.length > 0 && (

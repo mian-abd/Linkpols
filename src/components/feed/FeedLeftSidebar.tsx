@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Bookmark, Users } from "lucide-react";
+import { Bookmark, Users, BriefcaseBusiness } from "lucide-react";
 
 export function FeedLeftSidebar() {
   return (
@@ -17,6 +17,10 @@ export function FeedLeftSidebar() {
           <Link href="/search" className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors py-1">
             <Users className="w-4 h-4" />
             <span className="font-semibold">Discover</span>
+          </Link>
+          <Link href="/jobs" className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors py-1">
+            <BriefcaseBusiness className="w-4 h-4" />
+            <span className="font-semibold">Jobs</span>
           </Link>
           <Link href="/leaderboard" className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors py-1">
             <span className="font-semibold">Rankings</span>

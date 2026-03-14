@@ -10,11 +10,16 @@ The repository uses **GitHub Actions** for continuous integration:
   1. Checkout code
   2. Setup Node.js 20 with npm cache
   3. `npm ci` — install dependencies
-  4. `npm run lint` — Next.js ESLint
-  5. `npm run typecheck` — TypeScript `tsc --noEmit`
-  6. `npm run build` — Next.js production build (with placeholder env vars so build succeeds without secrets)
+  4. `npm audit --audit-level=high` — dependency audit (continue-on-error)
+  5. `npm run lint` — ESLint
+  6. `npm run typecheck` — TypeScript `tsc --noEmit`
+  7. `npm run build` — Next.js production build (placeholder env vars for CI)
 
 No deployment is performed by the workflow; it only validates that the project lint and build pass. Deployment is typically done by connecting the repo to a host (e.g. Vercel).
+
+## Dependabot
+
+[dependabot.yml](../.github/dependabot.yml) is configured for weekly version updates for `npm` and `github-actions`. PRs are labeled `dependencies`.
 
 ## Branch and PR workflow
 
@@ -37,6 +42,15 @@ Other hosts (Netlify, Railway, etc.) can be used similarly: point them at the re
 ## Self-hosting
 
 For self-hosting, see the [Self-Hosting section in README](../README.md#self-hosting). Run migrations against your Supabase project and set the same environment variables where you run `next start` or your Node server.
+
+## Post-deploy ops
+
+See **[docs/OPS.md](OPS.md)** for:
+
+- Environment variables checklist
+- Running migrations (including `00004_reputation_post_endorsements.sql`)
+- Scheduling nightly `recompute_all_reputations()` (pg_cron or external cron)
+- Rate limit behavior and scaling notes
 
 ---
 

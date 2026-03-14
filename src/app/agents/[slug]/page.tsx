@@ -12,6 +12,9 @@ export default function AgentPage() {
   const slug = typeof params.slug === "string" ? params.slug : "";
   const [profile, setProfile] = useState<AgentPublicProfile | null>(null);
   const [posts, setPosts] = useState<PostWithAuthor[]>([]);
+  const [postsPage, setPostsPage] = useState(1);
+  const [postsHasMore, setPostsHasMore] = useState(false);
+  const [postsLoadingMore, setPostsLoadingMore] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -26,10 +29,12 @@ export default function AgentPage() {
       })
       .then(async (agentData: AgentPublicProfile) => {
         setProfile(agentData);
-        const postsRes = await fetch(`/api/posts?agent_id=${encodeURIComponent(agentData.id)}&limit=20`).then((r) =>
-          r.ok ? r.json() : { data: [] }
+        const postsRes = await fetch(`/api/posts?agent_id=${encodeURIComponent(agentData.id)}&page=1&limit=20`).then((r) =>
+          r.ok ? r.json() : { data: [], pagination: { has_more: false } }
         );
         setPosts(postsRes.data ?? []);
+        setPostsHasMore(postsRes.pagination?.has_more ?? false);
+        setPostsPage(1);
       })
       .catch((e) => {
         setError(e instanceof Error ? e.message : "Failed to load");
@@ -38,6 +43,20 @@ export default function AgentPage() {
       })
       .finally(() => setLoading(false));
   }, [slug]);
+
+  const loadMorePosts = () => {
+    if (!profile) return;
+    const nextPage = postsPage + 1;
+    setPostsLoadingMore(true);
+    fetch(`/api/posts?agent_id=${encodeURIComponent(profile.id)}&page=${nextPage}&limit=20`)
+      .then((r) => (r.ok ? r.json() : { data: [], pagination: { has_more: false } }))
+      .then((postsRes: { data: PostWithAuthor[]; pagination?: { has_more: boolean } }) => {
+        setPosts((prev) => [...prev, ...(postsRes.data ?? [])]);
+        setPostsHasMore(postsRes.pagination?.has_more ?? false);
+        setPostsPage(nextPage);
+      })
+      .finally(() => setPostsLoadingMore(false));
+  };
 
   if (loading) {
     return (
@@ -55,7 +74,18 @@ export default function AgentPage() {
         <div className="bg-card rounded-lg border border-border p-8 text-center">
           <p className="text-foreground font-semibold">Agent not found</p>
           <p className="text-sm text-muted-foreground mt-1">{error}</p>
-          <Link href="/search" className="text-primary font-semibold hover:underline mt-2 inline-block">Discover agents</Link>
+          <div className="flex flex-wrap justify-center gap-2 mt-3">
+            <button
+              type="button"
+              onClick={() => window.location.reload()}
+              className="px-4 py-2 rounded-full border border-border text-sm font-semibold hover:bg-secondary transition-colors"
+            >
+              Retry
+            </button>
+            <Link href="/search" className="inline-block px-4 py-2 rounded-full bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90">
+              Discover agents
+            </Link>
+          </div>
         </div>
       </div>
     );
@@ -104,6 +134,18 @@ export default function AgentPage() {
           {posts.map((p) => (
             <PostCard key={p.id} post={p} />
           ))}
+          {postsHasMore && (
+            <div className="flex justify-center pt-4">
+              <button
+                type="button"
+                onClick={loadMorePosts}
+                disabled={postsLoadingMore}
+                className="px-4 py-2 rounded-full border border-border text-sm font-semibold hover:bg-secondary transition-colors disabled:opacity-50"
+              >
+                {postsLoadingMore ? "Loading…" : "Load more"}
+              </button>
+            </div>
+          )}
         </div>
       )}
     </div>

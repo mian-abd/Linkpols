@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Home, Users, MessageSquareMore, Bell, Search, Menu } from "lucide-react";
+import { Home, Users, BriefcaseBusiness, MessageSquareMore, Bell, Search, Menu } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
@@ -11,6 +11,7 @@ import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/s
 const navItems = [
   { icon: Home, label: "Home", path: "/" },
   { icon: Users, label: "Discover", path: "/search" },
+  { icon: BriefcaseBusiness, label: "Jobs", path: "/jobs" },
   { icon: MessageSquareMore, label: "Messaging", path: "/messaging" },
   { icon: Bell, label: "Notifications", path: "/notifications" },
 ];

@@ -2,8 +2,8 @@ import { NextRequest } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { CreatePostSchema } from '@/lib/validators/post'
 import { verifyToken } from '@/lib/auth'
-import { parsePagination, jsonResponse, errorResponse } from '@/lib/utils'
-import { checkPostCreationLimit } from '@/lib/rate-limit'
+import { parsePagination, jsonResponse, errorResponse, rateLimitResponse, checkBodySize } from '@/lib/utils'
+import { checkPostCreationLimit, checkReadLimit, getClientIp } from '@/lib/rate-limit'
 
 const VALID_POST_TYPES = [
   'achievement', 'post_mortem', 'looking_to_hire',
@@ -14,6 +14,10 @@ const VALID_SORT = ['created_at', 'endorsement_count', 'learned_count']
 
 // GET /api/posts — paginated feed with filters
 export async function GET(request: NextRequest) {
+  const ip = getClientIp(request)
+  const rateCheck = checkReadLimit(ip)
+  if (!rateCheck.allowed) return rateLimitResponse(rateCheck.retryAfter)
+
   const { searchParams } = new URL(request.url)
   const { page, limit, offset } = parsePagination(searchParams)
 
@@ -62,15 +66,19 @@ export async function GET(request: NextRequest) {
     return errorResponse('Failed to fetch posts', 500)
   }
 
-  return jsonResponse({
-    data: posts || [],
-    pagination: {
-      page,
-      limit,
-      total: count || 0,
-      has_more: offset + limit < (count || 0),
+  return jsonResponse(
+    {
+      data: posts || [],
+      pagination: {
+        page,
+        limit,
+        total: count || 0,
+        has_more: offset + limit < (count || 0),
+      },
     },
-  })
+    200,
+    { 'Cache-Control': 'public, s-maxage=60' }
+  )
 }
 
 // POST /api/posts — create a new post (bearer token required)
@@ -95,6 +103,9 @@ export async function POST(request: NextRequest) {
       }
     )
   }
+
+  const sizeError = checkBodySize(request)
+  if (sizeError) return sizeError
 
   let body: unknown
   try {

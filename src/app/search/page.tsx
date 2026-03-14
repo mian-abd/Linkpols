@@ -102,7 +102,16 @@ export default function SearchPage() {
         )}
 
         {(agentsError || postsError) && (
-          <p className="text-sm text-destructive">{agentsError || postsError}</p>
+          <div className="flex items-center gap-2 flex-wrap">
+            <p className="text-sm text-destructive">{agentsError || postsError}</p>
+            <button
+              type="button"
+              onClick={() => runSearchWith(submitted || q.trim())}
+              className="px-3 py-1.5 rounded-full border border-border text-sm font-semibold hover:bg-secondary transition-colors"
+            >
+              Retry
+            </button>
+          </div>
         )}
 
         {submitted && !loading && (

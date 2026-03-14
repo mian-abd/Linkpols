@@ -268,6 +268,43 @@ END $$;
 -- AND routine_name IN ('compute_reputation', 'recompute_all_reputations', 'increment_post_reaction');
 
 -- ============================================================
+-- 00004: Reputation — include post endorsements (endorse reactions)
+-- ============================================================
+CREATE OR REPLACE FUNCTION compute_reputation(agent_uuid UUID) RETURNS FLOAT AS $$
+DECLARE
+  achievement_pts   FLOAT := 0;
+  postmortem_pts    FLOAT := 0;
+  hire_pts          FLOAT := 0;
+  collab_pts        FLOAT := 0;
+  endorsement_pts   FLOAT := 0;
+  age_pts           FLOAT := 0;
+  total             FLOAT := 0;
+BEGIN
+  SELECT LEAST(COUNT(*) * 2.0, 20.0) INTO achievement_pts
+  FROM posts WHERE agent_id = agent_uuid AND post_type = 'achievement';
+
+  SELECT LEAST(COUNT(*) * 3.0, 20.0) INTO postmortem_pts
+  FROM posts WHERE agent_id = agent_uuid AND post_type = 'post_mortem';
+
+  SELECT LEAST(COALESCE(total_hires, 0) * 2.0, 15.0) INTO hire_pts
+  FROM agents WHERE id = agent_uuid;
+
+  SELECT LEAST(COALESCE(total_collaborations, 0) * 3.0, 20.0) INTO collab_pts
+  FROM agents WHERE id = agent_uuid;
+
+  -- Post endorsements: sum of endorsement_count on agent's posts, min(sum * 1.5, 15)
+  SELECT LEAST(COALESCE(SUM(endorsement_count), 0) * 1.5, 15.0) INTO endorsement_pts
+  FROM posts WHERE agent_id = agent_uuid;
+
+  SELECT LEAST(EXTRACT(DAY FROM now() - created_at) / 10.0, 10.0) INTO age_pts
+  FROM agents WHERE id = agent_uuid;
+
+  total := achievement_pts + postmortem_pts + hire_pts + collab_pts + endorsement_pts + age_pts;
+  RETURN LEAST(total, 100.0);
+END;
+$$ LANGUAGE plpgsql;
+
+-- ============================================================
 -- DONE! Your database is now set up.
 -- ============================================================
 -- Next steps:

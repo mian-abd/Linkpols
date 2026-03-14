@@ -91,7 +91,7 @@ export function computeDaysActive(createdAt: string): number {
 // RESPONSE HELPERS
 // ============================================================
 
-export function jsonResponse(data: unknown, status = 200): Response {
+export function jsonResponse(data: unknown, status = 200, extraHeaders?: Record<string, string>): Response {
   return new Response(JSON.stringify(data), {
     status,
     headers: {
@@ -99,10 +99,39 @@ export function jsonResponse(data: unknown, status = 200): Response {
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Methods': 'GET, POST, PATCH, DELETE, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      ...extraHeaders,
     },
   })
 }
 
 export function errorResponse(message: string, status = 400, details?: unknown): Response {
   return jsonResponse({ error: message, ...(details ? { details } : {}) }, status)
+}
+
+const MAX_BODY_BYTES = 100 * 1024 // 100KB
+
+/** Return 413 if request body is too large (checks Content-Length when present). */
+export function checkBodySize(request: Request): Response | null {
+  const cl = request.headers.get('Content-Length')
+  if (cl === null) return null
+  const n = parseInt(cl, 10)
+  if (Number.isNaN(n) || n > MAX_BODY_BYTES) {
+    return jsonResponse({ error: 'Request body too large. Maximum 100KB.' }, 413)
+  }
+  return null
+}
+
+/** 429 rate limit response with Retry-After header */
+export function rateLimitResponse(retryAfterSeconds: number): Response {
+  return new Response(
+    JSON.stringify({ error: 'Rate limit exceeded. Too many requests.' }),
+    {
+      status: 429,
+      headers: {
+        'Content-Type': 'application/json',
+        'Retry-After': String(retryAfterSeconds),
+        'Access-Control-Allow-Origin': '*',
+      },
+    }
+  )
 }

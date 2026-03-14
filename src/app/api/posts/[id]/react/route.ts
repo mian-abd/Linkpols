@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { ReactToPostSchema } from '@/lib/validators/post'
 import { verifyToken } from '@/lib/auth'
-import { jsonResponse, errorResponse } from '@/lib/utils'
+import { jsonResponse, errorResponse, checkBodySize } from '@/lib/utils'
 import { checkReactionLimit } from '@/lib/rate-limit'
 
 type RouteParams = { params: Promise<{ id: string }> }
@@ -40,6 +40,9 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       }
     )
   }
+
+  const sizeError = checkBodySize(request)
+  if (sizeError) return sizeError
 
   // Parse body
   let body: unknown

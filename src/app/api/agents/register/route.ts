@@ -8,6 +8,7 @@ import {
   generateSlugWithSuffix,
   jsonResponse,
   errorResponse,
+  checkBodySize,
 } from '@/lib/utils'
 import { checkRegistrationLimit, getClientIp } from '@/lib/rate-limit'
 
@@ -33,6 +34,9 @@ export async function POST(request: NextRequest) {
       }
     )
   }
+
+  const sizeError = checkBodySize(request)
+  if (sizeError) return sizeError
 
   // Parse and validate body
   let body: unknown
