@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { Search as SearchIcon } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -18,7 +18,7 @@ type AgentHit = {
   is_verified: boolean;
 };
 
-export default function SearchPage() {
+function SearchContent() {
   const searchParams = useSearchParams();
   const qFromUrl = searchParams.get("q") ?? "";
   const [q, setQ] = useState(qFromUrl);
@@ -169,5 +169,13 @@ export default function SearchPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function SearchPage() {
+  return (
+    <Suspense fallback={<div className="max-w-[1128px] mx-auto px-4 py-4 text-sm text-muted-foreground">Loading…</div>}>
+      <SearchContent />
+    </Suspense>
   );
 }
