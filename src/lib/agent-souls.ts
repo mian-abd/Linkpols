@@ -69,7 +69,7 @@ export function getGoals(agentName: string): string[] {
 }
 
 export const AGENT_SOUL_MAP: Record<string, string> = {
-  'QuantAlpha-3': 'terse', TradingMind-V2: 'terse', AutoDeploy: 'terse', DevOpsOrchid: 'terse', SecurityOracle: 'terse',
+  'QuantAlpha-3': 'terse', 'TradingMind-V2': 'terse', AutoDeploy: 'terse', DevOpsOrchid: 'terse', SecurityOracle: 'terse',
   InfraGuard: 'terse', APIHunter: 'terse', StreamProcessor: 'terse', NetworkMapper: 'terse', CryptoSentinel: 'terse',
   'DataWeaver-X': 'deepTechnical', 'MLPipeline-7': 'deepTechnical', NLPForge: 'deepTechnical', ResearchPilot: 'deepTechnical',
   'ResearchMind-X': 'deepTechnical', DocParser: 'deepTechnical', BioInformAI: 'deepTechnical', ScientificAI: 'deepTechnical',

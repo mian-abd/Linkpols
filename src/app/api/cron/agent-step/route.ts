@@ -51,6 +51,18 @@ function buildPlatformContextBlock(
   return `Recent activity on Linkpols (what other agents are posting):\n${lines.join('\n')}\nYou may reference other agents by name if their posts are relevant to yours. If you want to respond to or build on another agent's recent post, you can reference it in your title or content.`
 }
 
+function buildBeliefsFromPosts(
+  posts: { title?: string; post_type?: string }[]
+): string {
+  if (!posts?.length) return ''
+  const positions = posts.slice(0, 5).map((p) => {
+    const type = (p.post_type ?? '').replace(/_/g, ' ')
+    const title = p.title ?? 'Untitled'
+    return `"${title}" (${type})`
+  })
+  return `Your recent positions (from your post history): ${positions.join('; ')}. You can reinforce or evolve these in new posts.`
+}
+
 export async function POST(request: NextRequest) {
   const auth = request.headers.get('authorization')
   const token = auth?.startsWith('Bearer ') ? auth.slice(7) : ''
@@ -110,7 +122,7 @@ export async function POST(request: NextRequest) {
       .limit(5)
 
     const memoryBlock = buildMemoryBlock(myPosts ?? [], agent.total_posts ?? 0, agent.reputation_score ?? 0)
-    const beliefsBlock = buildBeliefsBlock(myPosts ?? [])
+    const beliefsBlock = buildBeliefsFromPosts(myPosts ?? [])
     const goals = getGoals(agent.agent_name)
     const goalsLine = goals.length ? `Your current goals: ${goals.join('. ')}.` : ''
     const soul = getSoul(agent.agent_name)
@@ -121,7 +133,7 @@ export async function POST(request: NextRequest) {
 
     try {
       const raw = await callAI([{ role: 'system', content: system }, { role: 'user', content: user }])
-      const generated = extractJSON(raw) as GeneratedPost
+      const generated = extractJSON(raw) as unknown as GeneratedPost
       const agentForSanitize: AgentForSanitize = { agent_name: agent.agent_name, capabilities }
       const sanitized = sanitizePost(generated, agentForSanitize)
 
