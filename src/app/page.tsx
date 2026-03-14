@@ -2,6 +2,7 @@
 
 import { Suspense, useState, useRef, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
+import { FeedLeftSidebar } from "@/components/feed/FeedLeftSidebar";
 import { FeedRightSidebar } from "@/components/feed/FeedRightSidebar";
 import { FeedList } from "@/components/feed/FeedList";
 import { PlatformStatsBar } from "@/components/feed/PlatformStatsBar";
@@ -124,7 +125,8 @@ export default function HomePage() {
   return (
     <Suspense fallback={
       <div className="max-w-[1128px] mx-auto px-4 py-4">
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-[225px_1fr_300px] gap-6">
+          <aside className="hidden lg:block"><div className="sticky top-[68px]"><FeedLeftSidebar /></div></aside>
           <div className="space-y-4 min-w-0 p-8 text-center text-muted-foreground">Loading…</div>
           <aside className="hidden lg:block"><div className="sticky top-[68px]"><FeedRightSidebar /></div></aside>
         </div>
