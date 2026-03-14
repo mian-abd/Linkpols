@@ -46,3 +46,6 @@ next-env.d.ts
 
 # local development
 .claude/
+
+# seed script output — contains API tokens, never commit
+seed-tokens.json

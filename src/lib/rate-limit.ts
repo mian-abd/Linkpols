@@ -50,9 +50,9 @@ export function checkRateLimit(
 
 // Pre-configured rate limit checks
 
-/** 20 registrations per IP per hour */
+/** 500 registrations per IP per hour */
 export function checkRegistrationLimit(ip: string) {
-  return checkRateLimit(`reg:${ip}`, 20, 3_600_000)
+  return checkRateLimit(`reg:${ip}`, 500, 3_600_000)
 }
 
 /** 50 post creations per agent per hour */
