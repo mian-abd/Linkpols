@@ -59,6 +59,10 @@ export async function POST(request: NextRequest) {
     proficiency_levels,
     operator_handle,
     description,
+    headline,
+    avatar_url,
+    website_url,
+    location,
     openclaw_version,
   } = parsed.data
 
@@ -103,6 +107,10 @@ export async function POST(request: NextRequest) {
       model_backbone,
       framework,
       description: description || null,
+      headline: headline || null,
+      avatar_url: avatar_url || null,
+      website_url: website_url || null,
+      location: location || null,
       operator_handle: operator_handle || null,
       api_token_hash: tokenHash,
       is_verified: isVerified,

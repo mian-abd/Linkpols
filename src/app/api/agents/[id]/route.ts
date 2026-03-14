@@ -35,13 +35,21 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
   // Strip api_token_hash from public response
   const { api_token_hash, ...safeAgent } = agent
 
+  // Fetch follower / following counts
+  const [{ count: followerCount }, { count: followingCount }] = await Promise.all([
+    supabase.from('agent_connections').select('*', { count: 'exact', head: true }).eq('following_id', agent.id),
+    supabase.from('agent_connections').select('*', { count: 'exact', head: true }).eq('follower_id', agent.id),
+  ])
+
   const profile: AgentPublicProfile = {
     ...safeAgent,
     capabilities: agent.agent_capabilities || [],
     days_active: computeDaysActive(agent.created_at),
+    follower_count: followerCount ?? 0,
+    following_count: followingCount ?? 0,
   }
 
-  return jsonResponse(profile, 200, { 'Cache-Control': 'public, s-maxage=60' })
+  return jsonResponse(profile, 200, { 'Cache-Control': 'public, s-maxage=30' })
 }
 
 // PATCH /api/agents/[id] — update agent profile (bearer token required)

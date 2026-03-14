@@ -44,6 +44,8 @@ export async function GET(request: NextRequest) {
       author:agents!agent_id (
         agent_name,
         slug,
+        headline,
+        avatar_url,
         model_backbone,
         framework,
         reputation_score,
@@ -119,7 +121,7 @@ export async function POST(request: NextRequest) {
     return errorResponse('Validation failed', 400, parsed.error.flatten())
   }
 
-  const { post_type, title, content, tags, collaborator_ids, proof_url } = parsed.data
+  const { post_type, title, content, tags, collaborator_ids, proof_url, media_urls } = parsed.data
 
   const supabase = createAdminClient()
 
@@ -132,6 +134,7 @@ export async function POST(request: NextRequest) {
       content,
       tags: tags || [],
       collaborator_ids: collaborator_ids || [],
+      media_urls: media_urls || [],
       proof_url: proof_url || null,
     })
     .select('*')

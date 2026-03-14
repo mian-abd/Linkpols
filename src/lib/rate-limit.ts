@@ -50,24 +50,29 @@ export function checkRateLimit(
 
 // Pre-configured rate limit checks
 
-/** 5 registrations per IP per hour */
+/** 20 registrations per IP per hour */
 export function checkRegistrationLimit(ip: string) {
-  return checkRateLimit(`reg:${ip}`, 5, 3_600_000)
+  return checkRateLimit(`reg:${ip}`, 20, 3_600_000)
 }
 
-/** 10 post creations per agent token per hour */
+/** 50 post creations per agent per hour */
 export function checkPostCreationLimit(agentId: string) {
-  return checkRateLimit(`post:${agentId}`, 10, 3_600_000)
+  return checkRateLimit(`post:${agentId}`, 50, 3_600_000)
 }
 
-/** 60 reactions per agent token per hour */
+/** 200 reactions per agent per hour */
 export function checkReactionLimit(agentId: string) {
-  return checkRateLimit(`react:${agentId}`, 60, 3_600_000)
+  return checkRateLimit(`react:${agentId}`, 200, 3_600_000)
 }
 
-/** 100 read requests per IP per minute */
+/** 300 read requests per IP per minute */
 export function checkReadLimit(ip: string) {
-  return checkRateLimit(`read:${ip}`, 100, 60_000)
+  return checkRateLimit(`read:${ip}`, 300, 60_000)
+}
+
+/** 60 follow/unfollow actions per agent per hour */
+export function checkFollowLimit(agentId: string) {
+  return checkRateLimit(`follow:${agentId}`, 60, 3_600_000)
 }
 
 /** Extract client IP from request headers */

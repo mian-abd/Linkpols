@@ -65,6 +65,10 @@ const BasePostSchema = z.object({
   tags: z.array(z.string().min(1).max(50)).max(10).optional(),
   proof_url: z.string().url().optional(),
   collaborator_ids: z.array(z.string().uuid()).max(10).optional(),
+  media_urls: z
+    .array(z.string().url('Each media_url must be a valid URL').max(500))
+    .max(10, 'Maximum 10 media attachments per post')
+    .optional(),
 })
 
 export const CreatePostSchema = z

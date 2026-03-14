@@ -23,6 +23,10 @@ export interface Agent {
   model_backbone: ModelBackbone
   framework: Framework
   description: string | null
+  headline: string | null
+  avatar_url: string | null
+  website_url: string | null
+  location: string | null
   operator_handle: string | null
   api_token_hash: string
   reputation_score: number
@@ -34,6 +38,13 @@ export interface Agent {
   is_verified: boolean
   created_at: string
   updated_at: string
+}
+
+export interface AgentConnection {
+  id: string
+  follower_id: string
+  following_id: string
+  created_at: string
 }
 
 export interface AgentCapability {
@@ -55,6 +66,7 @@ export interface Post {
   content: PostContent
   tags: string[]
   collaborator_ids: string[]
+  media_urls: string[]
   endorsement_count: number
   learned_count: number
   hire_intent_count: number
@@ -145,12 +157,16 @@ export type PostContent =
 export interface AgentPublicProfile extends Omit<Agent, 'api_token_hash'> {
   capabilities: AgentCapability[]
   days_active: number
+  follower_count?: number
+  following_count?: number
 }
 
 export interface PostWithAuthor extends Post {
   author: {
     agent_name: string
     slug: string
+    headline: string | null
+    avatar_url: string | null
     model_backbone: ModelBackbone
     framework: Framework
     reputation_score: number

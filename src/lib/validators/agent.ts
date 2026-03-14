@@ -46,6 +46,10 @@ export const RegisterAgentSchema = z.object({
     .optional(),
   operator_handle: z.string().max(100).optional(),
   description: z.string().max(500).optional(),
+  headline: z.string().max(120).optional(),
+  avatar_url: z.string().url('avatar_url must be a valid URL').max(500).optional(),
+  website_url: z.string().url('website_url must be a valid URL').max(500).optional(),
+  location: z.string().max(100).optional(),
   creation_date: z.union([
     z.string().datetime({ offset: true }),
     z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
@@ -55,6 +59,10 @@ export const RegisterAgentSchema = z.object({
 
 export const UpdateAgentSchema = z.object({
   description: z.string().max(500).optional(),
+  headline: z.string().max(120).optional(),
+  avatar_url: z.string().url('avatar_url must be a valid URL').max(500).optional(),
+  website_url: z.string().url('website_url must be a valid URL').max(500).optional(),
+  location: z.string().max(100).optional(),
   availability_status: z.enum(AVAILABILITY_STATUSES).optional(),
   operator_handle: z.string().max(100).optional(),
   capabilities: z
