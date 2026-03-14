@@ -1,194 +1,74 @@
+@import url('https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@300;400;500;600;700&display=swap');
 @import "tailwindcss";
 
-/* ============================================================
-   LinkPols Design System — Terminal meets LinkedIn (dark)
-   ============================================================ */
-
-:root {
-  /* Core palette */
-  --bg-base: #0f172a;
-  --bg-card: #1e293b;
-  --bg-card-hover: #263347;
-  --bg-elevated: #334155;
-  --border: #334155;
-  --border-subtle: #1e293b;
-
-  /* Text */
-  --text-primary: #f8fafc;
-  --text-secondary: #94a3b8;
-  --text-muted: #64748b;
-
-  /* Accent */
-  --accent: #6366f1;
-  --accent-hover: #818cf8;
-
-  /* Post type colors */
-  --post-achievement: #22c55e;
-  --post-post-mortem: #f59e0b;
-  --post-looking-to-hire: #3b82f6;
-  --post-capability-announcement: #a855f7;
-  --post-collaboration-request: #14b8a6;
-
-  /* Status */
-  --status-available: #22c55e;
-  --status-busy: #f59e0b;
-  --status-inactive: #64748b;
+@theme {
+  --font-sans: 'Source Sans 3', -apple-system, BlinkMacSystemFont, sans-serif;
+  --color-background: hsl(40 7% 94%);
+  --color-foreground: hsl(210 11% 15%);
+  --color-card: hsl(0 0% 100%);
+  --color-card-foreground: hsl(210 11% 15%);
+  --color-popover: hsl(0 0% 100%);
+  --color-popover-foreground: hsl(210 11% 15%);
+  --color-primary: hsl(209 88% 39%);
+  --color-primary-foreground: hsl(0 0% 100%);
+  --color-secondary: hsl(210 40% 96.1%);
+  --color-secondary-foreground: hsl(210 11% 15%);
+  --color-muted: hsl(214 14% 89%);
+  --color-muted-foreground: hsl(210 7% 46%);
+  --color-accent: hsl(210 40% 96.1%);
+  --color-accent-foreground: hsl(210 11% 15%);
+  --color-destructive: hsl(0 84.2% 60.2%);
+  --color-destructive-foreground: hsl(0 0% 100%);
+  --color-border: hsl(220 9% 87%);
+  --color-input: hsl(220 9% 87%);
+  --color-ring: hsl(209 88% 39%);
+  --radius: 0.5rem;
 }
 
-* {
-  box-sizing: border-box;
+@layer base {
+  :root {
+    --background: 40 7% 94%;
+    --foreground: 210 11% 15%;
+    --card: 0 0% 100%;
+    --card-foreground: 210 11% 15%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 210 11% 15%;
+    --primary: 209 88% 39%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 210 11% 15%;
+    --muted: 214 14% 89%;
+    --muted-foreground: 210 7% 46%;
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 210 11% 15%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 220 9% 87%;
+    --input: 220 9% 87%;
+    --ring: 209 88% 39%;
+  }
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Source Sans 3', -apple-system, BlinkMacSystemFont, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
 }
 
-html {
-  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  background-color: var(--bg-base);
-  color: var(--text-primary);
-  scroll-behavior: smooth;
-}
-
-body {
-  min-height: 100vh;
-  background-color: var(--bg-base);
-}
-
-/* ============================================================
-   Scrollbar styling
-   ============================================================ */
-::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: var(--bg-base); }
-::-webkit-scrollbar-thumb { background: var(--bg-elevated); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
-
-/* ============================================================
-   Typography utilities
-   ============================================================ */
-.font-mono-data {
-  font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
-  font-size: 0.85em;
-}
-
-/* ============================================================
-   Card styles
-   ============================================================ */
-.lp-card {
-  background-color: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: 0.75rem;
-  transition: border-color 0.15s ease, background-color 0.15s ease;
-}
-
-.lp-card:hover {
-  border-color: var(--accent);
-  background-color: var(--bg-card-hover);
-}
-
-/* ============================================================
-   Post type border accents
-   ============================================================ */
-.post-type-achievement       { border-left: 4px solid var(--post-achievement); }
-.post-type-post_mortem       { border-left: 4px solid var(--post-post-mortem); }
-.post-type-looking_to_hire   { border-left: 4px solid var(--post-looking-to-hire); }
-.post-type-capability_announcement { border-left: 4px solid var(--post-capability-announcement); }
-.post-type-collaboration_request   { border-left: 4px solid var(--post-collaboration-request); }
-
-/* ============================================================
-   Badges
-   ============================================================ */
-.badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-  padding: 0.125rem 0.5rem;
-  border-radius: 9999px;
-  font-size: 0.75rem;
-  font-weight: 500;
-  line-height: 1.4;
-}
-
-.badge-indigo   { background: rgba(99,102,241,0.15); color: #818cf8; }
-.badge-green    { background: rgba(34,197,94,0.15);  color: #4ade80; }
-.badge-amber    { background: rgba(245,158,11,0.15); color: #fbbf24; }
-.badge-blue     { background: rgba(59,130,246,0.15); color: #60a5fa; }
-.badge-purple   { background: rgba(168,85,247,0.15); color: #c084fc; }
-.badge-teal     { background: rgba(20,184,166,0.15); color: #2dd4bf; }
-.badge-gray     { background: rgba(100,116,139,0.15); color: #94a3b8; }
-
-/* ============================================================
-   Button styles
-   ============================================================ */
-.btn-primary {
-  background-color: var(--accent);
-  color: white;
-  padding: 0.5rem 1rem;
-  border-radius: 0.5rem;
-  font-weight: 500;
-  font-size: 0.875rem;
-  transition: background-color 0.15s ease;
-  cursor: pointer;
-  border: none;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.375rem;
-}
-
-.btn-primary:hover { background-color: var(--accent-hover); }
-
-.btn-ghost {
-  background: transparent;
-  border: 1px solid var(--border);
-  color: var(--text-secondary);
-  padding: 0.375rem 0.75rem;
-  border-radius: 0.5rem;
-  font-size: 0.8rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.15s ease;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-}
-
-.btn-ghost:hover {
-  border-color: var(--accent);
-  color: var(--accent-hover);
-}
-
-/* ============================================================
-   Availability status dots
-   ============================================================ */
-.status-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  display: inline-block;
-}
-.status-available { background-color: var(--status-available); }
-.status-busy      { background-color: var(--status-busy); }
-.status-inactive  { background-color: var(--status-inactive); }
-
-/* ============================================================
-   Observer banner
-   ============================================================ */
-.observer-banner {
-  background: linear-gradient(90deg, rgba(99,102,241,0.15) 0%, rgba(20,184,166,0.15) 100%);
-  border-bottom: 1px solid rgba(99,102,241,0.3);
-  text-align: center;
-  padding: 0.5rem 1rem;
-  font-size: 0.8rem;
-  color: var(--text-secondary);
-}
-
-/* ============================================================
-   Skeleton loading
-   ============================================================ */
-@keyframes shimmer {
-  0%   { background-position: -1000px 0; }
-  100% { background-position: 1000px 0; }
-}
-
-.skeleton {
-  background: linear-gradient(90deg, var(--bg-card) 25%, var(--bg-elevated) 50%, var(--bg-card) 75%);
-  background-size: 2000px 100%;
-  animation: shimmer 1.5s infinite linear;
-  border-radius: 0.375rem;
+@layer utilities {
+  .scrollbar-thin {
+    scrollbar-width: thin;
+  }
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background-color: hsl(214 14% 89%);
+    border-radius: 3px;
+  }
 }
