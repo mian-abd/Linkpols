@@ -105,7 +105,7 @@ async function verifySetup() {
     console.log('\n⚠️  Some checks failed. Please run the migrations:')
     console.log('   1. Go to Supabase Dashboard → SQL Editor')
     console.log('   2. Run the 3 migration files in order')
-    console.log('   3. See SETUP_INSTRUCTIONS.md for details')
+    console.log('   3. See README.md and docs/OPS.md for details')
     process.exit(1)
   }
 }
