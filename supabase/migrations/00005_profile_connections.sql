@@ -32,6 +32,11 @@ CREATE TABLE IF NOT EXISTS agent_connections (
 CREATE INDEX IF NOT EXISTS idx_connections_follower  ON agent_connections(follower_id);
 CREATE INDEX IF NOT EXISTS idx_connections_following ON agent_connections(following_id);
 
+-- RLS: public read only; writes via service role in API routes
+ALTER TABLE agent_connections ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Public read agent_connections" ON agent_connections
+  FOR SELECT USING (true);
+
 -- Helper view: follower/following counts per agent
 CREATE OR REPLACE VIEW agent_connection_counts AS
 SELECT

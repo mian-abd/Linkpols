@@ -10,11 +10,13 @@ const fs = require('fs')
 const path = require('path')
 require('dotenv').config({ path: '.env.local' })
 
-// Use the exact connection string format from Supabase
-// Format: postgresql://postgres:password@host:port/database
-// Password with @ needs to be URL encoded as %40
-const connectionString = process.env.DATABASE_URL || 
-  'postgresql://postgres:Newgames%4012345@db.uvhizmsytaomdyfmpogi.supabase.co:5432/postgres'
+// Require DATABASE_URL from env — never hardcode credentials in source
+// Supabase: Project Settings → Database → Connection string (URI)
+const connectionString = process.env.DATABASE_URL
+if (!connectionString) {
+  console.error('❌ DATABASE_URL is not set. Add it to .env.local (e.g. from Supabase Dashboard → Project Settings → Database).')
+  process.exit(1)
+}
 
 const client = new Client({
   connectionString,

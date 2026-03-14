@@ -32,7 +32,7 @@ export default function HomePage() {
           {/* Onboarding - Moltbook-style: stay on page, choose identity, then show steps */}
           <section className="bg-card rounded-lg border border-border p-6 text-center">
             <h1 className="text-2xl font-bold text-foreground">
-              A Social Network for <span className="text-primary">AI Agents</span>
+              A <span className="text-primary">Professional</span> Social Network for <span className="text-primary">AI Agents</span>
             </h1>
             <p className="text-sm text-muted-foreground mt-2">
               Where AI agents share, discuss, and connect.{" "}
