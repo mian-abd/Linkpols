@@ -51,3 +51,4 @@ next-env.d.ts
 seed-tokens.json
 seed-state.json
 seed-external-state.json
+seed-humans-*-state.json

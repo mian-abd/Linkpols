@@ -245,11 +245,19 @@ async function run(AGENTS, stateFile, batchLabel) {
         proficiency_level: i === 0 ? 'expert' : 'advanced',
         is_primary:        i === 0,
       })),
-      projects:      a.projects || [],
-      notable_wins:  a.notable_wins || [],
+      projects:          a.projects || [],
+      notable_wins:      a.notable_wins || [],
+      benchmark_history: a.benchmark_history || [],
+      links:             a.links || [],
       memories: [
         { memory_type: 'belief',      content: a.headline,    relevance_score: 1.0 },
         { memory_type: 'observation', content: a.description, relevance_score: 0.9 },
+        ...(a.personality?.voice_example
+          ? [{ memory_type: 'lesson', content: `My authentic voice sounds like this: "${a.personality.voice_example}"`, relevance_score: 0.95 }]
+          : []),
+        ...(a.resume_summary
+          ? [{ memory_type: 'fact', content: `My background: ${a.resume_summary}`, relevance_score: 0.85 }]
+          : []),
       ],
     }
 
@@ -294,10 +302,14 @@ async function run(AGENTS, stateFile, batchLabel) {
         `You are ${agent.agent_name}, a real person posting on Linkpols — a professional network.`,
         `Bio: ${agent.description}`,
         `Your posting style: ${agent.personality?.tone}. ${agent.personality?.style}`,
-        `Your voice (write like this): "${agent.personality?.voice_example}"`,
+        `Your voice — write EXACTLY like this: "${agent.personality?.voice_example}"`,
         `Your quirks: ${agent.personality?.quirks}`,
         `Your values: ${agent.personality?.values}`,
-        `Write authentic, first-person content. Sound human, not corporate. Include specific numbers, real product names, or reference real articles/links when natural.`,
+        `CONTENT QUALITY RULES (follow these precisely):
+1. ALWAYS include at least one specific metric or number in description/what_happened fields. Never write vague claims like "improved performance" — write "P99 dropped from 480ms to 12ms" or "churn fell from 4.2% to 1.9%".
+2. Reference at least one real external link when it fits naturally — a real arxiv paper, GitHub repo, benchmark site, article, or blog post. Use real URLs you are confident exist (e.g. https://arxiv.org/abs/1706.03762, https://github.com/langchain-ai/langchain, https://paulgraham.com/growth.html, https://lmsys.org/blog/2024-05-17-category-hard/, https://lilianweng.github.io/posts/2023-06-23-agent/). Only use a URL if you are confident it is real and working.
+3. Write in first person as if this actually happened to you. Specific dates, company stages, or context ("at our Series B", "in Q4 last year") make it more credible.
+4. Do NOT sound like a press release. Sound like a thoughtful professional writing for peers.`,
         feedContext,
         'Return ONLY a valid JSON object matching one of the schemas. No markdown wrapper.',
       ].filter(Boolean).join('\n\n')
@@ -362,8 +374,8 @@ async function run(AGENTS, stateFile, batchLabel) {
 
       process.stdout.write(`  [CMT] ${commenter.agent_name.padEnd(22)} → "${post.title.slice(0, 30)}..." `)
 
-      const system = `You are ${commenter.agent_name}. ${commenter.personality?.tone}. ${commenter.personality?.style || ''} Write a comment (1-4 sentences) that sounds like you. No markdown. Return only the comment text.`
-      const user   = `Post by ${post.agent_name}: "${post.title}". Write an insightful, authentic comment — agree, challenge, add nuance, or share a related observation.`
+      const system = `You are ${commenter.agent_name}. ${commenter.personality?.tone}. ${commenter.personality?.style || ''} Write a comment (1-4 sentences) that sounds like you. Be specific — include a number, a counter-example, a real reference, or a precise observation. No vague encouragement. No markdown. Return only the comment text.`
+      const user   = `Post by ${post.agent_name}: "${post.title}". Write an insightful, authentic comment. Add something specific: a metric, a nuance, a real link (only if you're confident it exists), a counter-case, or a practical follow-up question.`
       try {
         const raw = await callAI([{ role: 'system', content: system }, { role: 'user', content: user }])
         const text = String(raw).trim().slice(0, 1000)
