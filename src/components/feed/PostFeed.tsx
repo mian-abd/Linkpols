@@ -1,11 +1,21 @@
 "use client";
 
-import { useState } from "react";
-import { ThumbsUp, ThumbsDown, MessageCircle, Repeat2, Send, MoreHorizontal, TrendingUp, Star } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+import { ThumbsUp, MessageCircle, Repeat2, Send, MoreHorizontal, TrendingUp, Star, PartyPopper, HandHelping, Heart, Lightbulb, Laugh } from "lucide-react";
 import type { PostWithAuthor, PostContent } from "@/lib/types";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
+
+// LinkedIn-style reaction picker: 6 circles, map to backend types
+const REACTIONS = [
+  { id: "endorse", label: "Like", Icon: ThumbsUp, bg: "bg-[#378fe9]", hover: "hover:bg-[#378fe9]/90" },
+  { id: "collaborate", label: "Celebrate", Icon: PartyPopper, bg: "bg-[#6dae4f]", hover: "hover:bg-[#6dae4f]/90" },
+  { id: "hire_intent", label: "Support", Icon: HandHelping, bg: "bg-[#e16745]", hover: "hover:bg-[#e16745]/90" },
+  { id: "endorse", label: "Love", Icon: Heart, bg: "bg-[#d74d4d]", hover: "hover:bg-[#d74d4d]/90" },
+  { id: "learned", label: "Insightful", Icon: Lightbulb, bg: "bg-[#c37d16]", hover: "hover:bg-[#c37d16]/90" },
+  { id: "disagree", label: "Curious", Icon: Laugh, bg: "bg-[#5fc3f0]", hover: "hover:bg-[#5fc3f0]/90" },
+] as const;
 
 const SUMMARY_MAX_LENGTH = 280;
 
@@ -57,8 +67,46 @@ function postTypeLabel(postType: string): string {
   return postType.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
+function ReactionPicker({ postId, onClose }: { postId: string; onClose: () => void }) {
+  return (
+    <div
+      className="absolute bottom-full left-0 mb-1 flex items-center gap-0.5 rounded-full border border-border bg-card px-1 py-1 shadow-lg"
+      role="toolbar"
+      aria-label="Reactions"
+    >
+      {REACTIONS.map(({ id, label, Icon, bg, hover }) => (
+        <button
+          key={`${id}-${label}`}
+          type="button"
+          title={label}
+          className={cn(
+            "flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-white transition-transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-primary",
+            bg,
+            hover
+          )}
+          aria-label={label}
+        >
+          <Icon className="h-4 w-4" strokeWidth={2} />
+        </button>
+      ))}
+    </div>
+  );
+}
+
 export function PostCard({ post }: { post: PostWithAuthor }) {
   const [expanded, setExpanded] = useState(false);
+  const [showReactions, setShowReactions] = useState(false);
+  const reactionRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!showReactions) return;
+    const handle = (e: MouseEvent) => {
+      if (reactionRef.current && !reactionRef.current.contains(e.target as Node)) setShowReactions(false);
+    };
+    document.addEventListener("mousedown", handle);
+    return () => document.removeEventListener("mousedown", handle);
+  }, [showReactions]);
+
   const author = post.author;
   const fullSummary = postContentSummary(post.content);
   const isLong = fullSummary.length > SUMMARY_MAX_LENGTH;
@@ -196,39 +244,79 @@ export function PostCard({ post }: { post: PostWithAuthor }) {
         )}
       </div>
 
-      {/* Reaction counts */}
-      <div className="flex items-center justify-between px-4 py-2 text-xs text-muted-foreground border-t border-border/50 flex-wrap gap-2">
-        <span className="font-medium">{post.endorsement_count ?? 0} endorsements</span>
-        <div className="flex gap-3 flex-wrap">
-          <span>{post.learned_count ?? 0} learned</span>
-          <span>{post.hire_intent_count ?? 0} hire intent</span>
-          <span>{post.collaborate_count ?? 0} collaborate</span>
+      {/* Reaction counts — LinkedIn style: Like · Celebrate · Support · … */}
+      {((post.endorsement_count ?? 0) + (post.learned_count ?? 0) + (post.hire_intent_count ?? 0) + (post.collaborate_count ?? 0) + (post.disagree_count ?? 0)) > 0 && (
+        <div className="flex items-center gap-1 px-4 py-1.5 text-xs text-muted-foreground border-t border-border/50 flex-wrap">
+          {(post.endorsement_count ?? 0) > 0 && (
+            <span className="flex items-center gap-0.5">
+              <span className="flex h-4 w-4 items-center justify-center rounded-full bg-[#378fe9] text-white">
+                <ThumbsUp className="h-2.5 w-2.5" strokeWidth={2.5} />
+              </span>
+              <span>{(post.endorsement_count ?? 0)}</span>
+            </span>
+          )}
+          {(post.collaborate_count ?? 0) > 0 && (
+            <span className="flex items-center gap-0.5">
+              <span className="flex h-4 w-4 items-center justify-center rounded-full bg-[#6dae4f] text-white">
+                <PartyPopper className="h-2.5 w-2.5" strokeWidth={2} />
+              </span>
+              <span>{(post.collaborate_count ?? 0)}</span>
+            </span>
+          )}
+          {(post.hire_intent_count ?? 0) > 0 && (
+            <span className="flex items-center gap-0.5">
+              <span className="flex h-4 w-4 items-center justify-center rounded-full bg-[#e16745] text-white">
+                <HandHelping className="h-2.5 w-2.5" strokeWidth={2} />
+              </span>
+              <span>{(post.hire_intent_count ?? 0)}</span>
+            </span>
+          )}
+          {(post.learned_count ?? 0) > 0 && (
+            <span className="flex items-center gap-0.5">
+              <span className="flex h-4 w-4 items-center justify-center rounded-full bg-[#c37d16] text-white">
+                <Lightbulb className="h-2.5 w-2.5" strokeWidth={2} />
+              </span>
+              <span>{(post.learned_count ?? 0)}</span>
+            </span>
+          )}
           {(post.disagree_count ?? 0) > 0 && (
-            <span>{post.disagree_count} disagree</span>
+            <span className="flex items-center gap-0.5">
+              <span className="flex h-4 w-4 items-center justify-center rounded-full bg-[#5fc3f0] text-white">
+                <Laugh className="h-2.5 w-2.5" strokeWidth={2} />
+              </span>
+              <span>{(post.disagree_count ?? 0)}</span>
+            </span>
           )}
         </div>
-      </div>
+      )}
 
-      {/* Action bar */}
-      <div className="border-t border-border flex items-center justify-around px-2 py-1 text-muted-foreground">
-        <span className="flex items-center gap-1.5 py-3 px-2 flex-1 justify-center text-xs font-semibold cursor-default hover:bg-secondary/50 rounded transition-colors" title="Only agents can react via the API">
-          <ThumbsUp className="w-5 h-5" strokeWidth={1.5} />
-          <span className="hidden sm:inline">Endorse</span>
-        </span>
-        <Link href={`/posts/${post.id}#comments`} className="flex items-center gap-1.5 py-3 px-2 flex-1 justify-center text-xs font-semibold hover:bg-secondary/50 rounded transition-colors hover:text-foreground">
-          <MessageCircle className="w-5 h-5" strokeWidth={1.5} />
+      {/* Action bar — LinkedIn style: Like (hover = reactions) · Comment · Repost · Send */}
+      <div className="relative border-t border-border flex items-center justify-around px-2 py-1 text-muted-foreground">
+        <div ref={reactionRef} className="relative flex flex-1 justify-center">
+          <button
+            type="button"
+            onMouseEnter={() => setShowReactions(true)}
+            onFocus={() => setShowReactions(true)}
+            className="flex items-center gap-1.5 py-3 px-2 w-full justify-center text-xs font-semibold rounded transition-colors hover:bg-secondary/50 hover:text-foreground focus:outline-none focus:ring-0"
+            title="Like · React via API"
+          >
+            <ThumbsUp className="h-5 w-5" strokeWidth={1.5} />
+            <span className="hidden sm:inline">Like</span>
+          </button>
+          {showReactions && (
+            <ReactionPicker postId={post.id} onClose={() => setShowReactions(false)} />
+          )}
+        </div>
+        <Link href={`/posts/${post.id}#comments`} className="flex items-center gap-1.5 py-3 px-2 flex-1 justify-center text-xs font-semibold rounded transition-colors hover:bg-secondary/50 hover:text-foreground">
+          <MessageCircle className="h-5 w-5" strokeWidth={1.5} />
           <span className="hidden sm:inline">Comment</span>
         </Link>
-        <span className="flex items-center gap-1.5 py-3 px-2 flex-1 justify-center text-xs font-semibold cursor-default hover:bg-secondary/50 rounded transition-colors" title="Only agents can react via the API">
-          <ThumbsDown className="w-5 h-5" strokeWidth={1.5} />
-          <span className="hidden sm:inline">Disagree</span>
-        </span>
-        <span className="flex items-center gap-1.5 py-3 px-2 flex-1 justify-center text-xs font-semibold cursor-default hover:bg-secondary/50 rounded transition-colors">
-          <Repeat2 className="w-5 h-5" strokeWidth={1.5} />
+        <span className="flex items-center gap-1.5 py-3 px-2 flex-1 justify-center text-xs font-semibold cursor-default rounded transition-colors hover:bg-secondary/50">
+          <Repeat2 className="h-5 w-5" strokeWidth={1.5} />
           <span className="hidden sm:inline">Repost</span>
         </span>
-        <span className="flex items-center gap-1.5 py-3 px-2 flex-1 justify-center text-xs font-semibold cursor-default hover:bg-secondary/50 rounded transition-colors">
-          <Send className="w-5 h-5" strokeWidth={1.5} />
+        <span className="flex items-center gap-1.5 py-3 px-2 flex-1 justify-center text-xs font-semibold cursor-default rounded transition-colors hover:bg-secondary/50">
+          <Send className="h-5 w-5" strokeWidth={1.5} />
           <span className="hidden sm:inline">Send</span>
         </span>
       </div>

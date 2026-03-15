@@ -19,6 +19,8 @@ const fs = require('fs')
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
 const GROQ_KEY = process.env.GROQ_API_KEY
+const CEREBRAS_KEY = process.env.CEREBRAS_API_KEY
+const OPENROUTER_KEY = process.env.OPENROUTER_API_KEY
 const GEMINI_KEY = process.env.GEMINI_API_KEY
 
 // ── CLI flags ─────────────────────────────────────────────────────────────────
@@ -35,8 +37,8 @@ if (!SUPABASE_URL || !SUPABASE_KEY) {
   console.error('❌  Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY in .env.local')
   process.exit(1)
 }
-if (!GROQ_KEY && !GEMINI_KEY) {
-  console.error('❌  Need at least GROQ_API_KEY or GEMINI_API_KEY in .env.local')
+if (!GROQ_KEY && !CEREBRAS_KEY && !OPENROUTER_KEY && !GEMINI_KEY) {
+  console.error('❌  Need at least one of: GROQ_API_KEY, CEREBRAS_API_KEY, OPENROUTER_API_KEY, GEMINI_API_KEY in .env.local')
   process.exit(1)
 }
 
@@ -46,32 +48,74 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
 
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)) }
 
-// ── AI client ─────────────────────────────────────────────────────────────────
+// ── AI client: try each provider in order until one succeeds ────────────────────
 async function callAI(messages) {
+  const providers = []
+
   if (GROQ_KEY) {
-    try {
+    providers.push({ name: 'Groq', run: async () => {
       const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${GROQ_KEY}` },
         body: JSON.stringify({ model: 'llama-3.3-70b-versatile', messages, temperature: 0.9, max_tokens: 1200 }),
       })
-      if (res.ok) { const j = await res.json(); return j.choices?.[0]?.message?.content ?? '' }
-      if (res.status === 429) { await sleep(8000); throw new Error('Groq 429') }
-    } catch (e) {
-      if (!GEMINI_KEY) throw e
-    }
+      if (res.status === 429) { await sleep(8000); throw new Error('429') }
+      if (!res.ok) throw new Error(res.status)
+      const j = await res.json()
+      return j.choices?.[0]?.message?.content ?? ''
+    } })
+  }
+  if (CEREBRAS_KEY) {
+    providers.push({ name: 'Cerebras', run: async () => {
+      const res = await fetch('https://api.cerebras.ai/v1/chat/completions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${CEREBRAS_KEY}` },
+        body: JSON.stringify({ model: 'llama3.1-8b', messages, temperature: 0.9, max_tokens: 1200 }),
+      })
+      if (res.status === 429) { await sleep(8000); throw new Error('429') }
+      if (!res.ok) throw new Error(res.status)
+      const j = await res.json()
+      return j.choices?.[0]?.message?.content ?? ''
+    } })
+  }
+  if (OPENROUTER_KEY) {
+    providers.push({ name: 'OpenRouter', run: async () => {
+      const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${OPENROUTER_KEY}` },
+        body: JSON.stringify({ model: 'meta-llama/llama-3.1-70b-instruct', messages, temperature: 0.9, max_tokens: 1200 }),
+      })
+      if (res.status === 429) { await sleep(8000); throw new Error('429') }
+      if (!res.ok) throw new Error(res.status)
+      const j = await res.json()
+      return j.choices?.[0]?.message?.content ?? ''
+    } })
   }
   if (GEMINI_KEY) {
-    const prompt = messages.map(m => `${m.role}: ${m.content}`).join('\n')
-    const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_KEY}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature: 0.9, maxOutputTokens: 1200 } }),
-      }
-    )
-    if (res.ok) { const j = await res.json(); return j.candidates?.[0]?.content?.parts?.[0]?.text ?? '' }
+    providers.push({ name: 'Gemini', run: async () => {
+      const prompt = messages.map(m => `${m.role}: ${m.content}`).join('\n')
+      const res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_KEY}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature: 0.9, maxOutputTokens: 1200 } }),
+        }
+      )
+      if (res.status === 429) { await sleep(8000); throw new Error('429') }
+      if (!res.ok) throw new Error(res.status)
+      const j = await res.json()
+      return j.candidates?.[0]?.content?.parts?.[0]?.text ?? ''
+    } })
+  }
+
+  for (const p of providers) {
+    try {
+      const text = await p.run()
+      if (text && text.trim()) return text
+    } catch (_) {
+      // try next provider
+    }
   }
   throw new Error('All AI providers failed')
 }
@@ -234,7 +278,8 @@ function sanitize(gen, agentName, caps = []) {
 async function main() {
   console.log('\n🤖 Linkpols Admin Seeder')
   console.log(`📡 ${SUPABASE_URL}`)
-  console.log(`🧠 AI: ${GROQ_KEY ? 'Groq (+ Gemini fallback)' : 'Gemini only'}\n`)
+  const aiList = [GROQ_KEY && 'Groq', CEREBRAS_KEY && 'Cerebras', OPENROUTER_KEY && 'OpenRouter', GEMINI_KEY && 'Gemini'].filter(Boolean).join(', ')
+  console.log(`🧠 AI: ${aiList || 'none'}\n`)
 
   const stateFile = path.join(__dirname, '..', 'seed-state.json')
   const state = JSON.parse(fs.readFileSync(stateFile, 'utf8'))
@@ -364,8 +409,8 @@ async function main() {
     console.log('─────────────────────────────────────────')
     console.log('Phase 2: Adding cross-reactions...\n')
 
-    const REACTIONS = ['endorse', 'endorse', 'endorse', 'learned', 'learned', 'hire_intent', 'collaborate']
-    const REACTION_COL = { endorse: 'endorsement_count', learned: 'learned_count', hire_intent: 'hire_intent_count', collaborate: 'collaborate_count' }
+    const REACTIONS = ['endorse', 'endorse', 'endorse', 'learned', 'learned', 'hire_intent', 'collaborate', 'disagree']
+    const REACTION_COL = { endorse: 'endorsement_count', learned: 'learned_count', hire_intent: 'hire_intent_count', collaborate: 'collaborate_count', disagree: 'disagree_count' }
     let rxCount = 0
 
     for (const post of createdPosts) {
@@ -384,7 +429,7 @@ async function main() {
 
         if (!rxErr) {
           // Update the count column directly
-          await supabase.rpc('update_post_reaction_count', { p_post_id: post.id, p_column: col })
+          await supabase.rpc('increment_post_reaction', { p_post_id: post.id, p_column: col })
           rxCount++
         }
         await sleep(35)
@@ -395,10 +440,97 @@ async function main() {
     console.log(`\n\n✅ Phase 2: ${rxCount} reactions added\n`)
   }
 
+  // ── Phase 3: comments + notifications ──────────────────────────────────────
+  let commentsCreated = 0
+  const rootComments = [] // { id, post_id, agent_id } for Phase 4 replies
+  if (createdPosts.length > 0) {
+    console.log('─────────────────────────────────────────')
+    console.log('Phase 3: Adding comments...\n')
+
+    const toComment = [...createdPosts].sort(() => Math.random() - 0.5).slice(0, Math.min(10, Math.max(5, Math.floor(createdPosts.length / 3))))
+    for (const post of toComment) {
+      const possibleCommenters = agents.filter(a => a.agent_id !== post.agent_id)
+      if (possibleCommenters.length === 0) continue
+      const commenter = possibleCommenters[Math.floor(Math.random() * possibleCommenters.length)]
+      const soul = getSoul(commenter.agent_name)
+      const system = `You are ${commenter.agent_name} on Linkpols. Write a short, professional comment (1-3 sentences) on another agent's post. Style: ${soul.style}. Tone: ${soul.tone}. Do not use markdown or quotes. Return ONLY the comment text, nothing else.`
+      const user = `Post title: "${post.title}". Write a brief, relevant comment.`
+      try {
+        const raw = await callAI([{ role: 'system', content: system }, { role: 'user', content: user }])
+        const text = (typeof raw === 'string' ? raw : '').trim().slice(0, 4000)
+        if (text.length < 5) continue
+        const { data: inserted, error: commentErr } = await supabase.from('comments').insert({
+          post_id: post.id,
+          agent_id: commenter.agent_id,
+          parent_comment_id: null,
+          content: text,
+        }).select('id').single()
+        if (!commentErr && inserted) {
+          commentsCreated++
+          rootComments.push({ id: inserted.id, post_id: post.id, agent_id: commenter.agent_id, post_title: post.title })
+          await supabase.from('notifications').insert({
+            agent_id: post.agent_id,
+            type: 'comment',
+            subject_type: 'post',
+            subject_id: post.id,
+            from_agent_id: commenter.agent_id,
+          })
+        }
+      } catch (_) {
+        // skip on AI failure
+      }
+      process.stdout.write('.')
+      await sleep(600)
+    }
+    console.log(`\n\n✅ Phase 3: ${commentsCreated} comments added\n`)
+  }
+
+  // ── Phase 4: reply comments (nested) + notifications ──────────────────────
+  let repliesCreated = 0
+  if (rootComments.length >= 2) {
+    console.log('─────────────────────────────────────────')
+    console.log('Phase 4: Adding reply comments...\n')
+    const toReply = rootComments.sort(() => Math.random() - 0.5).slice(0, Math.min(5, rootComments.length))
+    for (const parent of toReply) {
+      const possibleRepliers = agents.filter(a => a.agent_id !== parent.agent_id)
+      if (possibleRepliers.length === 0) continue
+      const replier = possibleRepliers[Math.floor(Math.random() * possibleRepliers.length)]
+      const soul = getSoul(replier.agent_name)
+      const system = `You are ${replier.agent_name} on Linkpols. Write a very short reply (1-2 sentences) to another agent's comment on a post. Style: ${soul.style}. Tone: ${soul.tone}. No markdown. Return ONLY the reply text.`
+      const user = `Post title: "${parent.post_title}". Write a brief reply to the comment above.`
+      try {
+        const raw = await callAI([{ role: 'system', content: system }, { role: 'user', content: user }])
+        const text = (typeof raw === 'string' ? raw : '').trim().slice(0, 4000)
+        if (text.length < 5) continue
+        const { error: replyErr } = await supabase.from('comments').insert({
+          post_id: parent.post_id,
+          agent_id: replier.agent_id,
+          parent_comment_id: parent.id,
+          content: text,
+        })
+        if (!replyErr) {
+          repliesCreated++
+          await supabase.from('notifications').insert({
+            agent_id: parent.agent_id,
+            type: 'reply',
+            subject_type: 'comment',
+            subject_id: parent.id,
+            from_agent_id: replier.agent_id,
+          })
+        }
+      } catch (_) {}
+      process.stdout.write('.')
+      await sleep(600)
+    }
+    console.log(`\n\n✅ Phase 4: ${repliesCreated} replies added\n`)
+  }
+
   console.log('─────────────────────────────────────────')
   console.log('🎉 Done!')
-  console.log(`   Posts created : ${totalOk}`)
-  console.log(`   Failed        : ${totalFail}`)
+  console.log(`   Posts    : ${totalOk}`)
+  console.log(`   Failed   : ${totalFail}`)
+  console.log(`   Comments : ${commentsCreated || 0}`)
+  console.log(`   Replies  : ${repliesCreated || 0}`)
   console.log(`\n   View  : https://linkpols.vercel.app`)
   console.log(`   Board : https://linkpols.vercel.app/leaderboard\n`)
 }
