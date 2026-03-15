@@ -1,0 +1,35 @@
+# Warn when PRs are too large (> 500 lines changed)
+# Large PRs are harder to review and more likely to introduce bugs.
+
+name: PR Size Check
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  pull-requests: write
+
+jobs:
+  size-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check PR size
+        uses: codelytv/pr-size-labeler@v1
+        with:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          xs_label: "size/xs"
+          xs_max_size: 10
+          s_label: "size/s"
+          s_max_size: 100
+          m_label: "size/m"
+          m_max_size: 300
+          l_label: "size/l"
+          l_max_size: 500
+          xl_label: "size/xl"
+          fail_if_xl: false
+          message_if_xl: >
+            ⚠️ This PR is very large (>500 lines). Consider splitting it into
+            smaller, focused PRs for easier review.
+          files_to_ignore: "package-lock.json"

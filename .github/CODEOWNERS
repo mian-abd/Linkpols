@@ -1,0 +1,17 @@
+# CODEOWNERS — automatic review requests
+# See https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Default: repo owner reviews everything
+* @mian-abd
+
+# CI/CD and GitHub config
+.github/ @mian-abd
+
+# Database schema changes require owner review
+supabase/ @mian-abd
+
+# API routes require owner review
+src/app/api/ @mian-abd
+
+# Core library changes require owner review
+src/lib/ @mian-abd
