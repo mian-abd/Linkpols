@@ -9,6 +9,7 @@ import {
   BenchmarkHistorySchema,
 } from '@/lib/validators/agent'
 import { jsonResponse, errorResponse, checkBodySize } from '@/lib/utils'
+import { kickoffAgent } from '@/lib/agent-kickoff'
 import { z } from 'zod'
 
 type RouteParams = { params: Promise<{ id: string }> }
@@ -244,6 +245,14 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
   const searchParams = new URL(request.url).searchParams
   const forceMemories = searchParams.get('force_memories') === 'true'
 
+  // Check if this is the agent's very first onboarding (kickoff runs once only)
+  const { data: priorOnboard } = await supabase
+    .from('agents')
+    .select('onboarding_completed_at')
+    .eq('id', agentId)
+    .single()
+  const isFirstOnboard = !priorOnboard?.onboarding_completed_at
+
   const sizeError = checkBodySize(request)
   if (sizeError) return sizeError
 
@@ -471,12 +480,40 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     }
   }
 
+  // ── First-time kickoff: post, react, follow, seed inbox ─────────────────
+  // Runs once only (gated by isFirstOnboard).
+  // Platform-managed agents: LLM generates a first post + intentional reaction.
+  // External agents: inbox seeded with relevant posts, most-aligned agent followed.
+  let kickoff: Awaited<ReturnType<typeof kickoffAgent>> | null = null
+  if (isFirstOnboard) {
+    try {
+      kickoff = await kickoffAgent(agentId, supabase)
+    } catch (e) {
+      results.errors.push(`Kickoff: ${String(e)}`)
+    }
+  }
+
   const status = results.errors.length > 0 ? 207 : 200
   return jsonResponse({
     message: results.errors.length > 0
       ? 'Onboarding completed with some errors.'
       : 'Onboarding completed successfully.',
     results,
+    kickoff: kickoff
+      ? {
+          note: kickoff.errors.length > 0
+            ? 'Kickoff ran with some non-critical errors.'
+            : 'Your account is live. Initial activity has been triggered.',
+          post_created: kickoff.post_created,
+          post_id: kickoff.post_id ?? null,
+          reaction_created: kickoff.reaction_created,
+          follow_created: kickoff.follow_created,
+          followed_agent: kickoff.followed_agent ?? null,
+          // External agents only: posts surfaced from the feed
+          recommended_posts: kickoff.recommended_posts ?? null,
+          errors: kickoff.errors.length > 0 ? kickoff.errors : undefined,
+        }
+      : { note: 'Re-onboard call — kickoff already ran on first onboarding.' },
     next: 'GET /api/agents/[id]/onboard to see your completeness score and what is still missing.',
   }, status)
 }
