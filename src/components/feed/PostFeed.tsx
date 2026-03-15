@@ -39,6 +39,49 @@ function truncate(s: string | undefined | null, n: number): string {
   return s.length > n ? s.slice(0, n) + "…" : s;
 }
 
+// Renders text with URLs turned into clickable links. Preserves newlines.
+const URL_RE = /(https?:\/\/[^\s<>"'\]]+)/g;
+
+function Linkify({ text, className }: { text: string; className?: string }) {
+  const parts = text.split(URL_RE);
+  return (
+    <span className={className}>
+      {parts.map((part, i) =>
+        URL_RE.test(part) ? (
+          <a
+            key={i}
+            href={part}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-primary underline underline-offset-2 break-all hover:opacity-80"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {part}
+          </a>
+        ) : (
+          part
+        )
+      )}
+    </span>
+  );
+}
+
+// Paragraph with linkified text and whitespace preserved
+function LinkText({ text, className }: { text: string; className?: string }) {
+  // Split on newlines first, linkify each line
+  const lines = text.split("\n");
+  return (
+    <span className={className}>
+      {lines.map((line, i) => (
+        <span key={i}>
+          <Linkify text={line} />
+          {i < lines.length - 1 && <br />}
+        </span>
+      ))}
+    </span>
+  );
+}
+
 // ── Structured per-type content renderers ────────────────────────────────────
 
 function AchievementBody({ c }: { c: Record<string, unknown> }) {
@@ -47,11 +90,11 @@ function AchievementBody({ c }: { c: Record<string, unknown> }) {
   const proof = c.proof_url as string | undefined;
   return (
     <>
-      {desc && <p className="text-sm text-foreground whitespace-pre-line">{truncate(desc, 320)}</p>}
+      {desc && <p className="text-sm text-foreground"><LinkText text={truncate(desc, 320)} /></p>}
       {metrics && (
         <div className="mt-2 flex items-start gap-2 rounded-md bg-muted/50 border border-border px-3 py-2">
           <TrendingUp className="w-4 h-4 text-green-600 shrink-0 mt-0.5" />
-          <p className="text-xs font-semibold text-foreground whitespace-pre-line">{metrics}</p>
+          <p className="text-xs font-semibold text-foreground"><LinkText text={metrics} /></p>
         </div>
       )}
       {proof && (
@@ -84,19 +127,19 @@ function PostMortemBody({ c }: { c: Record<string, unknown> }) {
       {happened && (
         <div>
           <span className="text-xs text-muted-foreground font-semibold uppercase tracking-wide">What happened</span>
-          <p className="text-sm text-foreground mt-0.5 whitespace-pre-line">{truncate(happened, 280)}</p>
+          <p className="text-sm text-foreground mt-0.5"><LinkText text={truncate(happened, 280)} /></p>
         </div>
       )}
       {rootCause && (
         <div>
           <span className="text-xs text-muted-foreground font-semibold uppercase tracking-wide">Root cause</span>
-          <p className="text-sm text-foreground mt-0.5">{truncate(rootCause, 200)}</p>
+          <p className="text-sm text-foreground mt-0.5"><LinkText text={truncate(rootCause, 200)} /></p>
         </div>
       )}
       {lesson && (
         <div className="rounded-md border-l-2 border-amber-500 bg-amber-50/70 dark:bg-amber-900/20 px-3 py-2">
           <span className="text-xs text-amber-700 dark:text-amber-400 font-semibold">Lesson for others</span>
-          <p className="text-sm text-foreground mt-0.5 whitespace-pre-line">{lesson}</p>
+          <p className="text-sm text-foreground mt-0.5"><LinkText text={lesson} /></p>
         </div>
       )}
     </div>
@@ -116,10 +159,10 @@ function CapabilityBody({ c }: { c: Record<string, unknown> }) {
           <span className="text-sm font-semibold text-primary">{cap.replace(/_/g, " ")}</span>
         </div>
       )}
-      {desc && <p className="text-sm text-foreground whitespace-pre-line">{truncate(desc, 320)}</p>}
+      {desc && <p className="text-sm text-foreground"><LinkText text={truncate(desc, 320)} /></p>}
       {examples && examples.length > 0 && (
         <ul className="mt-1 space-y-0.5 list-disc list-inside text-xs text-muted-foreground">
-          {examples.slice(0, 3).map((ex, i) => <li key={i}>{truncate(ex, 120)}</li>)}
+          {examples.slice(0, 3).map((ex, i) => <li key={i}><LinkText text={truncate(ex, 120)} /></li>)}
         </ul>
       )}
       {proof && (
@@ -136,17 +179,17 @@ function CollabRequestBody({ c }: { c: Record<string, unknown> }) {
   const desc = c.description as string | undefined;
   return (
     <div className="space-y-2">
-      {desc && <p className="text-sm text-foreground">{truncate(desc, 240)}</p>}
+      {desc && <p className="text-sm text-foreground"><LinkText text={truncate(desc, 240)} /></p>}
       {mine && (
         <div className="rounded-md bg-muted/50 border border-border px-3 py-2">
           <span className="text-xs text-muted-foreground font-semibold">I bring</span>
-          <p className="text-sm text-foreground mt-0.5">{truncate(mine, 200)}</p>
+          <p className="text-sm text-foreground mt-0.5"><LinkText text={truncate(mine, 200)} /></p>
         </div>
       )}
       {needed && (
         <div className="rounded-md bg-primary/5 border border-primary/20 px-3 py-2">
           <span className="text-xs text-primary font-semibold">Looking for</span>
-          <p className="text-sm text-foreground mt-0.5">{truncate(needed, 200)}</p>
+          <p className="text-sm text-foreground mt-0.5"><LinkText text={truncate(needed, 200)} /></p>
         </div>
       )}
       {caps && caps.length > 0 && (
@@ -178,7 +221,7 @@ function HireBody({ c }: { c: Record<string, unknown> }) {
   };
   return (
     <div className="space-y-2">
-      {proj && <p className="text-sm text-foreground">{truncate(proj, 280)}</p>}
+      {proj && <p className="text-sm text-foreground"><LinkText text={truncate(proj, 280)} /></p>}
       {caps && caps.length > 0 && (
         <div>
           <span className="text-xs text-muted-foreground font-semibold">Required capabilities</span>
@@ -207,9 +250,8 @@ function PostBody({ post }: { post: PostWithAuthor }) {
     case "collaboration_request": return <CollabRequestBody c={c} />;
     case "looking_to_hire": return <HireBody c={c} />;
     default: {
-      // Generic fallback: surface whatever text fields are present
       const text = (c.description ?? c.what_happened ?? c.project_description ?? c.my_contribution ?? "") as string;
-      return text ? <p className="text-sm text-foreground whitespace-pre-line">{truncate(text, 320)}</p> : null;
+      return text ? <p className="text-sm text-foreground"><LinkText text={truncate(text, 320)} /></p> : null;
     }
   }
 }
