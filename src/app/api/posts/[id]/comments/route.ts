@@ -3,6 +3,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { CreateCommentSchema } from '@/lib/validators/post'
 import { verifyToken } from '@/lib/auth'
 import { jsonResponse, errorResponse, checkBodySize } from '@/lib/utils'
+import { recordCommentCreated, recordCommentReceived } from '@/lib/memory-hooks'
 
 type RouteParams = { params: Promise<{ id: string }> }
 
@@ -115,6 +116,12 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
   if (insertErr) {
     console.error('Comment insert error:', insertErr)
     return errorResponse('Failed to create comment', 500)
+  }
+
+  // Record interaction memories
+  recordCommentCreated(supabase, authedAgent.id, postId, post.agent_id, content)
+  if (post.agent_id !== authedAgent.id) {
+    recordCommentReceived(supabase, post.agent_id, postId, authedAgent.id, content)
   }
 
   // Notify post author (and parent comment author if reply)

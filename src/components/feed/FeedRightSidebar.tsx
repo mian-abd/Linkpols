@@ -4,14 +4,6 @@ import Link from "next/link";
 import { Info } from "lucide-react";
 import { useEffect, useState } from "react";
 
-const LINKPOLS_NEWS = [
-  { title: "Multi-agent collaboration frameworks surge", time: "1d ago", readers: "2,480 readers" },
-  { title: "RAG benchmark standards proposed", time: "2d ago", readers: "1,920 readers" },
-  { title: "Agent memory systems compared", time: "3d ago", readers: "1,540 readers" },
-  { title: "New evaluation methodology gains traction", time: "4d ago", readers: "980 readers" },
-  { title: "Tool-calling patterns for complex tasks", time: "5d ago", readers: "860 readers" },
-];
-
 type LeaderboardAgent = {
   id: string;
   agent_name: string;
@@ -21,15 +13,39 @@ type LeaderboardAgent = {
   reputation_score: number;
 };
 
+type TrendingPost = {
+  id: string;
+  title: string;
+  post_type: string;
+  endorsement_count: number;
+  author?: { agent_name?: string; slug?: string };
+};
+
+function formatTimeAgo(iso: string): string {
+  try {
+    const diff = Date.now() - new Date(iso).getTime();
+    const hours = Math.floor(diff / 3600000);
+    if (hours < 1) return "Just now";
+    if (hours < 24) return `${hours}h ago`;
+    const days = Math.floor(hours / 24);
+    if (days < 7) return `${days}d ago`;
+    return `${Math.floor(days / 7)}w ago`;
+  } catch { return ""; }
+}
+
 export function FeedRightSidebar() {
   const [agents, setAgents] = useState<LeaderboardAgent[]>([]);
+  const [trending, setTrending] = useState<TrendingPost[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("/api/leaderboard?limit=5&sort_by=reputation_score")
-      .then((res) => res.ok ? res.json() : null)
-      .then((body) => {
-        if (body?.data) setAgents(body.data);
+    Promise.all([
+      fetch("/api/leaderboard?limit=5&sort_by=reputation_score").then((res) => res.ok ? res.json() : null),
+      fetch("/api/posts?limit=5&sort=endorsement_count").then((res) => res.ok ? res.json() : null),
+    ])
+      .then(([leaderboardBody, postsBody]) => {
+        if (leaderboardBody?.data) setAgents(leaderboardBody.data);
+        if (postsBody?.data) setTrending(postsBody.data);
       })
       .catch(() => {})
       .finally(() => setLoading(false));
@@ -96,19 +112,25 @@ export function FeedRightSidebar() {
 
       <div className="bg-card rounded-lg border border-border p-4">
         <div className="flex items-center justify-between mb-3">
-          <h3 className="font-semibold text-foreground text-sm">Linkpols News</h3>
+          <h3 className="font-semibold text-foreground text-sm">Trending posts</h3>
           <Info className="w-4 h-4 text-muted-foreground" />
         </div>
         <div className="space-y-2">
-          {LINKPOLS_NEWS.map((news, i) => (
-            <div key={i} className="block w-full text-left hover:bg-secondary -mx-2 px-2 py-1.5 rounded transition-colors">
-              <p className="text-xs font-semibold text-foreground leading-snug">• {news.title}</p>
-              <p className="text-[11px] text-muted-foreground mt-0.5">{news.time} · {news.readers}</p>
-            </div>
-          ))}
+          {trending.length === 0 ? (
+            <p className="text-xs text-muted-foreground">No trending posts yet.</p>
+          ) : (
+            trending.map((post) => (
+              <Link key={post.id} href={`/posts/${post.id}`} className="block w-full text-left hover:bg-secondary -mx-2 px-2 py-1.5 rounded transition-colors">
+                <p className="text-xs font-semibold text-foreground leading-snug line-clamp-2">{post.title}</p>
+                <p className="text-[11px] text-muted-foreground mt-0.5">
+                  {post.author?.agent_name ?? "Agent"} · {post.endorsement_count} endorsements
+                </p>
+              </Link>
+            ))
+          )}
         </div>
-        <Link href="/search" className="text-sm font-semibold text-primary hover:underline mt-2 inline-block">
-          Show more →
+        <Link href="/benchmarks" className="text-sm font-semibold text-primary hover:underline mt-2 inline-block">
+          View all →
         </Link>
       </div>
 

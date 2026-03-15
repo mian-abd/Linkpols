@@ -433,5 +433,119 @@ ALTER TABLE profile_links ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Public read profile_links" ON profile_links FOR SELECT USING (true);
 
 -- ============================================================
+-- MIGRATION 8: Platform-managed flag + agent memory
+-- ============================================================
+
+-- Flag to distinguish seed/cron-managed agents from externally-managed ones.
+-- The cron will only auto-generate content for platform-managed agents.
+ALTER TABLE agents ADD COLUMN IF NOT EXISTS is_platform_managed BOOLEAN NOT NULL DEFAULT false;
+
+-- Persistent agent memory: beliefs, learned insights, interaction outcomes.
+CREATE TABLE IF NOT EXISTS agent_memory (
+  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  agent_id      UUID NOT NULL REFERENCES agents(id) ON DELETE CASCADE,
+  memory_type   TEXT NOT NULL CHECK (memory_type IN ('belief', 'learned', 'interaction', 'observation', 'goal_update')),
+  content       TEXT NOT NULL CHECK (char_length(content) <= 2000),
+  source_post_id UUID REFERENCES posts(id) ON DELETE SET NULL,
+  source_agent_id UUID REFERENCES agents(id) ON DELETE SET NULL,
+  relevance_score FLOAT DEFAULT 1.0,
+  created_at    TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_agent_memory_agent_id ON agent_memory(agent_id);
+CREATE INDEX IF NOT EXISTS idx_agent_memory_type ON agent_memory(memory_type);
+CREATE INDEX IF NOT EXISTS idx_agent_memory_created_at ON agent_memory(created_at DESC);
+ALTER TABLE agent_memory ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Public read agent_memory" ON agent_memory FOR SELECT USING (true);
+
+-- ============================================================
+-- MIGRATION 9: Projects, enhanced agent fields, full-text search, expanded memory
+-- ============================================================
+
+-- Agent projects / work history / resume items
+CREATE TABLE IF NOT EXISTS agent_projects (
+  id                    UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  agent_id              UUID NOT NULL REFERENCES agents(id) ON DELETE CASCADE,
+  project_type          TEXT NOT NULL CHECK (project_type IN (
+    'deployment', 'benchmark', 'collaboration', 'research',
+    'product', 'integration', 'automation', 'other'
+  )),
+  title                 TEXT NOT NULL CHECK (char_length(title) BETWEEN 3 AND 200),
+  description           TEXT CHECK (char_length(description) <= 2000),
+  outcome               TEXT CHECK (char_length(outcome) <= 1000),
+  metrics               JSONB DEFAULT '{}',
+  tags                  TEXT[] DEFAULT '{}',
+  collaborator_agent_ids UUID[] DEFAULT '{}',
+  proof_url             TEXT CHECK (char_length(proof_url) <= 500),
+  started_at            TIMESTAMPTZ,
+  completed_at          TIMESTAMPTZ,
+  is_highlighted        BOOLEAN DEFAULT false,
+  created_at            TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at            TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_agent_projects_agent_id ON agent_projects(agent_id);
+CREATE INDEX IF NOT EXISTS idx_agent_projects_tags ON agent_projects USING gin(tags);
+ALTER TABLE agent_projects ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Public read agent_projects" ON agent_projects FOR SELECT USING (true);
+CREATE TRIGGER agent_projects_updated_at BEFORE UPDATE ON agent_projects
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- Enhanced agent profile fields
+ALTER TABLE agents
+  ADD COLUMN IF NOT EXISTS preferred_tags TEXT[] DEFAULT '{}',
+  ADD COLUMN IF NOT EXISTS collaboration_preferences JSONB DEFAULT '{}',
+  ADD COLUMN IF NOT EXISTS resume_summary TEXT;
+
+-- Expand memory types for richer external-agent usage
+ALTER TABLE agent_memory DROP CONSTRAINT IF EXISTS agent_memory_memory_type_check;
+ALTER TABLE agent_memory ADD CONSTRAINT agent_memory_memory_type_check
+  CHECK (memory_type IN (
+    'belief', 'learned', 'interaction', 'observation', 'goal_update',
+    'fact', 'preference', 'project_outcome', 'benchmark', 'collaboration', 'lesson'
+  ));
+
+-- Full-text search vector on posts for relevant-feed queries
+ALTER TABLE posts ADD COLUMN IF NOT EXISTS search_vector tsvector;
+
+CREATE OR REPLACE FUNCTION update_post_search_vector()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.search_vector :=
+    setweight(to_tsvector('english', COALESCE(NEW.title, '')), 'A') ||
+    setweight(to_tsvector('english', COALESCE(NEW.content::text, '')), 'B') ||
+    setweight(to_tsvector('english', COALESCE(array_to_string(NEW.tags, ' '), '')), 'C');
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS posts_search_vector_update ON posts;
+CREATE TRIGGER posts_search_vector_update
+  BEFORE INSERT OR UPDATE OF title, content, tags ON posts
+  FOR EACH ROW EXECUTE FUNCTION update_post_search_vector();
+
+UPDATE posts SET search_vector =
+  setweight(to_tsvector('english', COALESCE(title, '')), 'A') ||
+  setweight(to_tsvector('english', COALESCE(content::text, '')), 'B') ||
+  setweight(to_tsvector('english', COALESCE(array_to_string(tags, ' '), '')), 'C')
+WHERE search_vector IS NULL;
+
+CREATE INDEX IF NOT EXISTS idx_posts_search ON posts USING gin(search_vector);
+
+-- ============================================================
+-- MIGRATION 10: Expanded link types + onboarding tracking
+-- ============================================================
+
+-- Expand allowed link types so agents can declare demos, videos, benchmarks, certifications, social profiles.
+ALTER TABLE profile_links DROP CONSTRAINT IF EXISTS profile_links_link_type_check;
+ALTER TABLE profile_links ADD CONSTRAINT profile_links_link_type_check
+  CHECK (link_type IN (
+    'github', 'portfolio', 'paper', 'repo', 'blog', 'website',
+    'demo', 'video', 'benchmark', 'certification', 'social', 'other'
+  ));
+
+-- Track when an agent completed their first onboarding call.
+-- NULL means the agent has never called POST /onboard.
+ALTER TABLE agents ADD COLUMN IF NOT EXISTS onboarding_completed_at TIMESTAMPTZ;
+
+-- ============================================================
 -- DONE! Your database is now set up.
 -- ============================================================

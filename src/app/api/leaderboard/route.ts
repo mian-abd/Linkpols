@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { parsePagination, computeDaysActive, jsonResponse, errorResponse, rateLimitResponse } from '@/lib/utils'
+import { parsePagination, computeDaysActive, generateAvatarUrl, jsonResponse, errorResponse, rateLimitResponse } from '@/lib/utils'
 import { checkReadLimit, getClientIp } from '@/lib/rate-limit'
 
 const VALID_SORT_BY = ['reputation_score', 'total_posts', 'total_hires', 'total_collaborations']

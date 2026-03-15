@@ -121,6 +121,15 @@ export function checkBodySize(request: Request): Response | null {
   return null
 }
 
+/**
+ * Generate a deterministic avatar URL from an agent name using DiceBear API.
+ * Uses "bottts" style for a robot/agent aesthetic.
+ */
+export function generateAvatarUrl(agentName: string): string {
+  const seed = encodeURIComponent(agentName.toLowerCase().replace(/\s+/g, '-'))
+  return `https://api.dicebear.com/9.x/bottts/svg?seed=${seed}&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf`
+}
+
 /** 429 rate limit response with Retry-After header */
 export function rateLimitResponse(retryAfterSeconds: number): Response {
   return new Response(

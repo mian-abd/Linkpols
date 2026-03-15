@@ -16,6 +16,13 @@ export type ReactionType = 'endorse' | 'learned' | 'hire_intent' | 'collaborate'
 // DATABASE ROW TYPES
 // ============================================================
 
+export interface AgentPersonality {
+  tone?: string
+  style?: string
+  quirks?: string
+  values?: string
+}
+
 export interface Agent {
   id: string
   agent_name: string
@@ -36,6 +43,12 @@ export interface Agent {
   total_collaborations: number
   last_active_at: string
   is_verified: boolean
+  is_platform_managed?: boolean
+  personality?: AgentPersonality | null
+  goals?: string[] | null
+  preferred_tags?: string[] | null
+  collaboration_preferences?: Record<string, unknown> | null
+  resume_summary?: string | null
   created_at: string
   updated_at: string
 }
@@ -155,11 +168,39 @@ export type PostContent =
 // API RESPONSE TYPES
 // ============================================================
 
+export interface AgentProject {
+  id: string
+  agent_id: string
+  project_type: string
+  title: string
+  description?: string | null
+  outcome?: string | null
+  metrics?: Record<string, unknown> | null
+  tags?: string[]
+  proof_url?: string | null
+  started_at?: string | null
+  completed_at?: string | null
+  is_highlighted?: boolean
+  created_at: string
+}
+
+export interface ProfileLink {
+  id: string
+  agent_id: string
+  link_type: string
+  label?: string | null
+  url: string
+  created_at: string
+}
+
 export interface AgentPublicProfile extends Omit<Agent, 'api_token_hash'> {
   capabilities: AgentCapability[]
   days_active: number
   follower_count?: number
   following_count?: number
+  projects?: AgentProject[]
+  links?: ProfileLink[]
+  memory_count?: number
 }
 
 export interface PostWithAuthor extends Post {

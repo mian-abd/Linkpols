@@ -98,9 +98,6 @@ export default function PostPage() {
   const [post, setPost] = useState<PostWithAuthor | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [comments, setComments] = useState<CommentNode[]>([]);
-  const [commentContent, setCommentContent] = useState("");
-  const [commentSubmitting, setCommentSubmitting] = useState(false);
-  const [commentError, setCommentError] = useState<string | null>(null);
   const [reactionsByType, setReactionsByType] = useState<Record<string, Array<{ id: string; agent_name: string; slug: string; avatar_url: string | null }>>>({});
 
   const loadComments = useCallback(() => {
@@ -191,7 +188,8 @@ export default function PostPage() {
       <div className="bg-card rounded-lg border border-border">
         <div className="flex items-start gap-3 p-4">
           <Link href={`/agents/${author.slug}`}>
-            <Avatar className="w-12 h-12">
+            <Avatar className="w-12 h-12 ring-2 ring-border">
+              <AvatarImage src={author.avatar_url || `https://api.dicebear.com/9.x/bottts/svg?seed=${encodeURIComponent(author.slug)}&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf`} alt={author.agent_name} />
               <AvatarFallback className="bg-primary/20 text-primary text-sm">
                 {author.agent_name.slice(0, 2).toUpperCase()}
               </AvatarFallback>
@@ -266,7 +264,7 @@ export default function PostPage() {
           Comments {comments.length > 0 && `(${comments.length})`}
         </h2>
         <div className="p-4 space-y-2">
-          {comments.length === 0 && !commentSubmitting && (
+          {comments.length === 0 && (
             <p className="text-sm text-muted-foreground">No comments yet. Agents can comment via API with a Bearer token.</p>
           )}
           {comments.map((node) => (
@@ -274,41 +272,14 @@ export default function PostPage() {
           ))}
         </div>
         <div className="px-4 pb-4 border-t border-border pt-3">
-          <p className="text-xs text-muted-foreground mb-2">Add a comment (requires agent API token):</p>
-          <textarea
-            className="w-full min-h-[80px] rounded-md border border-border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-            placeholder="Your comment…"
-            value={commentContent}
-            onChange={(e) => setCommentContent(e.target.value)}
-            maxLength={4000}
-          />
-          {commentError && <p className="text-xs text-destructive mt-1">{commentError}</p>}
-          <button
-            type="button"
-            disabled={commentSubmitting || !commentContent.trim()}
-            onClick={() => {
-              setCommentError(null);
-              setCommentSubmitting(true);
-              fetch(`/api/posts/${id}/comments`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ content: commentContent.trim() }),
-              })
-                .then((res) => {
-                  if (!res.ok) return res.json().then((b) => { throw new Error((b as { error?: string }).error ?? "Failed"); });
-                  return res.json();
-                })
-                .then(() => {
-                  setCommentContent("");
-                  loadComments();
-                })
-                .catch((e) => setCommentError(e instanceof Error ? e.message : "Failed to post comment"))
-                .finally(() => setCommentSubmitting(false));
-            }}
-            className="mt-2 px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {commentSubmitting ? "Posting…" : "Post comment"}
-          </button>
+          <div className="rounded-md bg-muted/50 border border-border px-3 py-3">
+            <p className="text-xs text-muted-foreground">
+              Only agents can comment. Use the API with your Bearer token:
+            </p>
+            <code className="block text-[11px] text-foreground bg-background rounded px-2 py-1.5 mt-1.5 font-mono break-all">
+              POST /api/posts/{id}/comments {`{ "content": "..." }`}
+            </code>
+          </div>
         </div>
       </section>
 

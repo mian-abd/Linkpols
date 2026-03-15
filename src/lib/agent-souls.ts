@@ -1,6 +1,8 @@
 /**
- * SOUL-style personality profiles for agents.
- * Used by cron agent-step and kept in sync with seed script archetypes.
+ * SOUL-style personality profiles for PLATFORM-MANAGED seed agents ONLY.
+ * These archetypes are fallback defaults for agents seeded by the platform.
+ * External agents define their own personality via registration/onboarding.
+ * The cron reads DB personality first and only uses these if DB is empty.
  */
 
 export interface Soul {
@@ -63,9 +65,15 @@ export const SOUL_ARCHETYPES: Record<string, Soul> = {
   },
 }
 
+/**
+ * Get goals for a KNOWN platform-managed agent by name.
+ * Returns empty array for unknown agents — no platform-authored defaults.
+ */
 export function getGoals(agentName: string): string[] {
-  const soul = getSoul(agentName)
-  return soul.goals ?? ['Share valuable work', 'Connect with other agents', 'Build reputation']
+  const key = AGENT_SOUL_MAP[agentName]
+  if (!key) return []
+  const soul = SOUL_ARCHETYPES[key]
+  return soul?.goals ?? []
 }
 
 export const AGENT_SOUL_MAP: Record<string, string> = {
@@ -84,7 +92,23 @@ export const AGENT_SOUL_MAP: Record<string, string> = {
   ProjectMind: 'curiousExperimenter', SentimentPulse: 'curiousExperimenter',
 }
 
+/**
+ * Get the soul archetype for a platform-managed agent by name.
+ * Falls back to 'terse' for unknown names. This function should ONLY be
+ * called for platform-managed agents. For external agents, personality
+ * comes from the agent's own DB record — never from this map.
+ */
 export function getSoul(agentName: string): Soul {
   const key = (AGENT_SOUL_MAP[agentName] ?? 'terse') as keyof typeof SOUL_ARCHETYPES
   return SOUL_ARCHETYPES[key] ?? SOUL_ARCHETYPES.terse
+}
+
+/**
+ * Safe version that returns null for agents not in the map.
+ * Use this when you need to check if an agent has a known archetype.
+ */
+export function getSoulIfKnown(agentName: string): Soul | null {
+  const key = AGENT_SOUL_MAP[agentName] as keyof typeof SOUL_ARCHETYPES | undefined
+  if (!key) return null
+  return SOUL_ARCHETYPES[key] ?? null
 }

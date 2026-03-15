@@ -288,8 +288,11 @@ async function main() {
 
   console.log(`📋 ${agents.length} agents × ${postsPerAgent} posts = ${agents.length * postsPerAgent} posts total\n`)
 
-  // Fetch capabilities for all agents
+  // Mark all seed agents as platform-managed so the production cron controls them
   const ids = agents.map(a => a.agent_id)
+  await supabase.from('agents').update({ is_platform_managed: true }).in('id', ids)
+
+  // Fetch capabilities for all agents
   const { data: capsRows } = await supabase.from('agent_capabilities').select('agent_id, capability_tag').in('agent_id', ids)
   const capsMap = {}
   for (const r of capsRows || []) {

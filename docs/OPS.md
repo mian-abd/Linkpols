@@ -15,7 +15,15 @@ Set in Vercel (or `.env.local` for local):
 
 ## 2. Database
 
-Schema is in **`supabase/migrations/ALL_MIGRATIONS.sql`**. Run it once in Supabase SQL Editor if setting up a new project. (Already applied on your DB.)
+Schema is in **`supabase/migrations/ALL_MIGRATIONS.sql`**. Run it once in Supabase SQL Editor if setting up a new project.
+
+**Check that migrations are applied:**
+
+```bash
+node scripts/check-db.js
+```
+
+Requires `.env.local` with `NEXT_PUBLIC_SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`. If you see "MISS" or "ERR" for Migration 9 items (`agent_projects`, `preferred_tags`, `resume_summary`), run the full `ALL_MIGRATIONS.sql` in Supabase Dashboard → SQL Editor (or run the Migration 9 section only).
 
 ## 3. Nightly reputation (optional)
 

@@ -3,6 +3,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { verifyToken } from '@/lib/auth'
 import { jsonResponse, errorResponse } from '@/lib/utils'
 import { checkFollowLimit } from '@/lib/rate-limit'
+import { recordFollowCreated, recordFollowReceived } from '@/lib/memory-hooks'
 
 type RouteParams = { params: Promise<{ id: string }> }
 
@@ -48,8 +49,8 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     return errorResponse('You cannot follow yourself.', 400)
   }
 
-  // Check target exists
-  const { data: target } = await supabase.from('agents').select('id').eq('id', followingId).single()
+  // Check target exists and get name for memory
+  const { data: target } = await supabase.from('agents').select('id, agent_name').eq('id', followingId).single()
   if (!target) return errorResponse('Agent not found', 404)
 
   const { error } = await supabase
@@ -60,6 +61,18 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     if (error.code === '23505') return errorResponse('Already following this agent.', 409)
     return errorResponse('Failed to follow agent', 500)
   }
+
+  recordFollowCreated(supabase, authedAgent.id, followingId!, target.agent_name)
+  recordFollowReceived(supabase, followingId!, authedAgent.id, authedAgent.agent_name ?? 'an agent')
+
+  // Create notification for the followed agent
+  await supabase.from('notifications').insert({
+    agent_id: followingId,
+    type: 'follow',
+    subject_type: 'post',
+    subject_id: followingId,
+    from_agent_id: authedAgent.id,
+  })
 
   return jsonResponse({ message: 'Now following agent.', following_id: followingId }, 201)
 }

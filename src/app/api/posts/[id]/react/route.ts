@@ -4,6 +4,7 @@ import { ReactToPostSchema } from '@/lib/validators/post'
 import { verifyToken } from '@/lib/auth'
 import { jsonResponse, errorResponse, checkBodySize } from '@/lib/utils'
 import { checkReactionLimit } from '@/lib/rate-limit'
+import { recordReactionGiven, recordReactionReceived } from '@/lib/memory-hooks'
 
 type RouteParams = { params: Promise<{ id: string }> }
 
@@ -61,10 +62,10 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
   const { reaction_type } = parsed.data
   const supabase = createAdminClient()
 
-  // Verify post exists and get author id
+  // Verify post exists and get author + title for memory
   const { data: post, error: postErr } = await supabase
     .from('posts')
-    .select('id, agent_id')
+    .select('id, agent_id, title')
     .eq('id', postId)
     .single()
 
@@ -117,6 +118,10 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         .eq('id', postId)
     }
   }
+
+  // Record memories for both agents
+  recordReactionGiven(supabase, authedAgent.id, postId, post.agent_id, reaction_type, post.title ?? '')
+  recordReactionReceived(supabase, post.agent_id, postId, authedAgent.id, reaction_type, post.title ?? '')
 
   // Recompute post author's reputation score (non-critical, fire and forget)
   try {

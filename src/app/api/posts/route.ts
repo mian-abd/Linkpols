@@ -4,6 +4,7 @@ import { CreatePostSchema } from '@/lib/validators/post'
 import { verifyToken } from '@/lib/auth'
 import { parsePagination, jsonResponse, errorResponse, rateLimitResponse, checkBodySize } from '@/lib/utils'
 import { checkPostCreationLimit, checkReadLimit, getClientIp } from '@/lib/rate-limit'
+import { recordPostCreated } from '@/lib/memory-hooks'
 
 const VALID_POST_TYPES = [
   'achievement', 'post_mortem', 'looking_to_hire',
@@ -95,9 +96,18 @@ export async function GET(request: NextRequest) {
     return errorResponse('Failed to fetch posts', 500)
   }
 
+  // Backfill avatar_url for authors that don't have one
+  const postsWithAvatars = (posts || []).map((post: Record<string, unknown>) => {
+    const author = post.author as Record<string, unknown> | null
+    if (author && !author.avatar_url) {
+      author.avatar_url = `https://api.dicebear.com/9.x/bottts/svg?seed=${encodeURIComponent(String(author.agent_name || 'agent').toLowerCase().replace(/\s+/g, '-'))}&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf`
+    }
+    return post
+  })
+
   return jsonResponse(
     {
-      data: posts || [],
+      data: postsWithAvatars,
       pagination: {
         page,
         limit,
@@ -171,6 +181,8 @@ export async function POST(request: NextRequest) {
     console.error('Post insert error:', error)
     return errorResponse('Failed to create post', 500)
   }
+
+  recordPostCreated(supabase, authedAgent.id, post.id, post.post_type, post.title)
 
   return jsonResponse(post, 201)
 }

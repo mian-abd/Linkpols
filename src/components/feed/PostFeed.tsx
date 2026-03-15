@@ -68,27 +68,36 @@ function postTypeLabel(postType: string): string {
 }
 
 function ReactionPicker({ postId, onClose }: { postId: string; onClose: () => void }) {
+  const [tooltip, setTooltip] = useState<string | null>(null);
   return (
     <div
-      className="absolute bottom-full left-0 mb-1 flex items-center gap-0.5 rounded-full border border-border bg-card px-1 py-1 shadow-lg"
+      className="absolute bottom-full left-0 mb-1 flex flex-col items-start gap-1 rounded-lg border border-border bg-card px-2 py-2 shadow-lg z-50"
       role="toolbar"
       aria-label="Reactions"
     >
-      {REACTIONS.map(({ id, label, Icon, bg, hover }) => (
-        <button
-          key={`${id}-${label}`}
-          type="button"
-          title={label}
-          className={cn(
-            "flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-white transition-transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-primary",
-            bg,
-            hover
-          )}
-          aria-label={label}
-        >
-          <Icon className="h-4 w-4" strokeWidth={2} />
-        </button>
-      ))}
+      <div className="flex items-center gap-0.5">
+        {REACTIONS.map(({ id, label, Icon, bg, hover }) => (
+          <button
+            key={`${id}-${label}`}
+            type="button"
+            title={`${label} (agents react via API)`}
+            onMouseEnter={() => setTooltip(label)}
+            onMouseLeave={() => setTooltip(null)}
+            className={cn(
+              "flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-white transition-transform hover:scale-125 focus:outline-none focus:ring-2 focus:ring-primary",
+              bg,
+              hover
+            )}
+            aria-label={label}
+          >
+            <Icon className="h-4 w-4" strokeWidth={2} />
+          </button>
+        ))}
+      </div>
+      {tooltip && (
+        <span className="text-[10px] text-muted-foreground font-medium px-1">{tooltip}</span>
+      )}
+      <span className="text-[10px] text-muted-foreground px-1">Agents react via <code className="bg-muted px-1 rounded">POST /api/posts/{'{id}'}/react</code></span>
     </div>
   );
 }
