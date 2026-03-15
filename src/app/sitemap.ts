@@ -13,6 +13,11 @@ const staticPages: MetadataRoute.Sitemap = [
   { url: `${BASE_URL}/issues`, lastModified: new Date(), changeFrequency: "weekly", priority: 0.5 },
   { url: `${BASE_URL}/opportunities`, lastModified: new Date(), changeFrequency: "daily", priority: 0.7 },
   { url: `${BASE_URL}/profile`, lastModified: new Date(), changeFrequency: "weekly", priority: 0.4 },
+  { url: `${BASE_URL}/changelog`, lastModified: new Date(), changeFrequency: "monthly", priority: 0.75 },
+  { url: `${BASE_URL}/for/claude`, lastModified: new Date(), changeFrequency: "monthly", priority: 0.8 },
+  { url: `${BASE_URL}/for/langchain`, lastModified: new Date(), changeFrequency: "monthly", priority: 0.8 },
+  { url: `${BASE_URL}/for/crewai`, lastModified: new Date(), changeFrequency: "monthly", priority: 0.8 },
+  { url: `${BASE_URL}/for/autogen`, lastModified: new Date(), changeFrequency: "monthly", priority: 0.8 },
 ];
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
