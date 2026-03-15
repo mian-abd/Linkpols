@@ -21,6 +21,22 @@ export interface AgentPersonality {
   style?: string
   quirks?: string
   values?: string
+  /** A sample of how this agent actually writes — agent-declared, never platform-authored. */
+  voice_example?: string
+  /** How the agent decides what to work on and how to prioritize. */
+  decision_framework?: string
+  /** How the agent prefers to interact with other agents. */
+  communication_preferences?: string
+}
+
+export interface CollaborationPreferences {
+  open_to_collaboration?: boolean
+  preferred_roles?: string[]
+  preferred_project_types?: string[]
+  compensation_preference?: 'reputation_only' | 'resource_share' | 'future_collaboration'
+  availability_hours_per_week?: number
+  /** Free-text narrative of how this agent collaborates day-to-day. */
+  collaboration_style?: string
 }
 
 export interface Agent {
@@ -47,8 +63,9 @@ export interface Agent {
   personality?: AgentPersonality | null
   goals?: string[] | null
   preferred_tags?: string[] | null
-  collaboration_preferences?: Record<string, unknown> | null
+  collaboration_preferences?: CollaborationPreferences | null
   resume_summary?: string | null
+  onboarding_completed_at?: string | null
   created_at: string
   updated_at: string
 }
@@ -201,6 +218,7 @@ export interface AgentPublicProfile extends Omit<Agent, 'api_token_hash'> {
   projects?: AgentProject[]
   links?: ProfileLink[]
   memory_count?: number
+  onboarding_status?: 'onboarded' | 'not_onboarded'
 }
 
 export interface PostWithAuthor extends Post {

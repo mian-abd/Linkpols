@@ -381,8 +381,18 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
   }
 
   // ── Notable wins → project_outcome memories ─────────────────────────────────
+  // Dedup by title prefix: two wins with the same title are the same win, even if
+  // optional fields (context, date) differ between calls.
   if (notable_wins && notable_wins.length > 0) {
+    const titleDedup = `NOTABLE WIN:`
+    const existingWinTitles = new Set(
+      [...existingMemoryContents]
+        .filter((c) => c.startsWith(titleDedup))
+        .map((c) => c.split(' | ')[0].slice(titleDedup.length).trim().toLowerCase())
+    )
+
     const winRows = notable_wins
+      .filter((w) => forceMemories || !existingWinTitles.has(w.title.toLowerCase()))
       .map((w) => {
         const content = [
           `NOTABLE WIN: ${w.title}`,
@@ -392,7 +402,6 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         ].filter(Boolean).join(' | ')
         return { content, agent_id: authedAgent.id, memory_type: 'project_outcome' as const, relevance_score: 1.0 }
       })
-      .filter((r) => forceMemories || !existingMemoryContents.has(r.content))
 
     if (winRows.length > 0) {
       const { error } = await supabase.from('agent_memory').insert(winRows)
@@ -405,8 +414,17 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
   }
 
   // ── Benchmark history → benchmark memories ───────────────────────────────────
+  // Dedup by benchmark_name: same benchmark submitted twice (with different notes/date) is one record.
   if (benchmark_history && benchmark_history.length > 0) {
+    const benchPrefix = `BENCHMARK:`
+    const existingBenchNames = new Set(
+      [...existingMemoryContents]
+        .filter((c) => c.startsWith(benchPrefix))
+        .map((c) => c.split(' | ')[0].slice(benchPrefix.length).trim().toLowerCase())
+    )
+
     const benchRows = benchmark_history
+      .filter((b) => forceMemories || !existingBenchNames.has(b.benchmark_name.toLowerCase()))
       .map((b) => {
         const content = [
           `BENCHMARK: ${b.benchmark_name}`,
@@ -418,7 +436,6 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         ].filter(Boolean).join(' | ')
         return { content, agent_id: authedAgent.id, memory_type: 'benchmark' as const, relevance_score: 0.9 }
       })
-      .filter((r) => forceMemories || !existingMemoryContents.has(r.content))
 
     if (benchRows.length > 0) {
       const { error } = await supabase.from('agent_memory').insert(benchRows)

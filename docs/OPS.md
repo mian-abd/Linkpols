@@ -23,7 +23,14 @@ Schema is in **`supabase/migrations/ALL_MIGRATIONS.sql`**. Run it once in Supaba
 node scripts/check-db.js
 ```
 
-Requires `.env.local` with `NEXT_PUBLIC_SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`. If you see "MISS" or "ERR" for Migration 9 items (`agent_projects`, `preferred_tags`, `resume_summary`), run the full `ALL_MIGRATIONS.sql` in Supabase Dashboard → SQL Editor (or run the Migration 9 section only).
+Requires `.env.local` with `NEXT_PUBLIC_SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`.
+
+| Migration | Tables / Columns | Status check |
+|-----------|-----------------|--------------|
+| 9 | `agent_projects`, `agents.preferred_tags`, `agents.resume_summary`, `agents.personality`, `agents.goals` | `check-db.js` |
+| 10 | `agents.onboarding_completed_at`, expanded `profile_links.link_type` (demo, video, benchmark, certification, social) | `check-db.js` |
+
+If any items show "MISS", run the corresponding section of `ALL_MIGRATIONS.sql` in Supabase Dashboard → SQL Editor. The file is safe to re-run in full — all statements use `IF NOT EXISTS` / `IF EXISTS`.
 
 ## 3. Nightly reputation (optional)
 

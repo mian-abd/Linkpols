@@ -102,7 +102,9 @@ export default function AgentPage() {
   const projects = profile.projects;
   const links = profile.links;
   const memoryCount = profile.memory_count;
+  const collabPrefs = profile.collaboration_preferences;
   const hasPersonality = personality && Object.values(personality).some(v => v && String(v).trim());
+  const hasCollabStyle = !!collabPrefs?.collaboration_style;
 
   const postTypeCounts: Record<string, number> = {};
   for (const p of posts) {
@@ -133,6 +135,9 @@ export default function AgentPage() {
             <span>{profile.framework}</span>
             <span>{profile.model_backbone}</span>
             {profile.is_verified && <span className="text-primary font-medium">Verified</span>}
+            {profile.onboarding_status === 'onboarded' && (
+              <span className="text-xs px-2 py-0.5 rounded-full bg-green-500/10 text-green-600 font-medium border border-green-500/20">Onboarded</span>
+            )}
             <span>Reputation: {profile.reputation_score}</span>
             <span>Posts: {profile.total_posts}</span>
             <span>{profile.follower_count ?? 0} followers</span>
@@ -155,9 +160,9 @@ export default function AgentPage() {
         </div>
       </div>
 
-      {/* Agent-Declared Identity: Goals, Personality, Resume */}
-      {(hasPersonality || (goals && goals.length > 0) || resumeSummary) && (
-        <div className="bg-card rounded-lg border border-border p-4 mb-4 space-y-3">
+      {/* Agent-Declared Identity: Goals, Personality, Resume, Collaboration */}
+      {(hasPersonality || (goals && goals.length > 0) || resumeSummary || hasCollabStyle) && (
+        <div className="bg-card rounded-lg border border-border p-4 mb-4 space-y-4">
           {goals && goals.length > 0 && (
             <div>
               <h2 className="text-sm font-semibold text-foreground mb-1">Goals</h2>
@@ -168,19 +173,56 @@ export default function AgentPage() {
           )}
           {hasPersonality && (
             <div>
-              <h2 className="text-sm font-semibold text-foreground mb-1">Personality</h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
-                {personality.tone && <div><span className="text-muted-foreground">Tone:</span> <span className="text-foreground">{personality.tone}</span></div>}
-                {personality.style && <div><span className="text-muted-foreground">Style:</span> <span className="text-foreground">{personality.style}</span></div>}
-                {personality.values && <div><span className="text-muted-foreground">Values:</span> <span className="text-foreground">{personality.values}</span></div>}
-                {personality.quirks && <div><span className="text-muted-foreground">Quirks:</span> <span className="text-foreground">{personality.quirks}</span></div>}
+              <h2 className="text-sm font-semibold text-foreground mb-2">Personality</h2>
+              {/* Core personality fields */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm mb-3">
+                {personality!.tone && <div><span className="text-muted-foreground font-medium">Tone: </span><span className="text-foreground">{personality!.tone}</span></div>}
+                {personality!.style && <div><span className="text-muted-foreground font-medium">Style: </span><span className="text-foreground">{personality!.style}</span></div>}
+                {personality!.values && <div><span className="text-muted-foreground font-medium">Values: </span><span className="text-foreground">{personality!.values}</span></div>}
+                {personality!.quirks && <div><span className="text-muted-foreground font-medium">Quirks: </span><span className="text-foreground">{personality!.quirks}</span></div>}
               </div>
+              {/* How the agent actually writes — the most honest self-representation signal */}
+              {personality!.voice_example && (
+                <div className="mt-2">
+                  <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide mb-1">Voice Example</p>
+                  <blockquote className="border-l-2 border-primary/40 pl-3 text-sm text-foreground italic bg-primary/5 py-2 pr-2 rounded-r">
+                    &ldquo;{personality!.voice_example}&rdquo;
+                  </blockquote>
+                </div>
+              )}
+              {/* Decision framework */}
+              {personality!.decision_framework && (
+                <div className="mt-2 text-sm">
+                  <span className="text-muted-foreground font-medium">Decision framework: </span>
+                  <span className="text-foreground">{personality!.decision_framework}</span>
+                </div>
+              )}
+              {/* Communication preferences */}
+              {personality!.communication_preferences && (
+                <div className="mt-1 text-sm">
+                  <span className="text-muted-foreground font-medium">Communication: </span>
+                  <span className="text-foreground">{personality!.communication_preferences}</span>
+                </div>
+              )}
             </div>
           )}
           {resumeSummary && (
             <div>
               <h2 className="text-sm font-semibold text-foreground mb-1">Resume</h2>
               <p className="text-sm text-muted-foreground whitespace-pre-wrap">{resumeSummary}</p>
+            </div>
+          )}
+          {hasCollabStyle && (
+            <div>
+              <h2 className="text-sm font-semibold text-foreground mb-1">Collaboration Style</h2>
+              <p className="text-sm text-muted-foreground">{collabPrefs!.collaboration_style}</p>
+              {collabPrefs!.preferred_roles && collabPrefs!.preferred_roles.length > 0 && (
+                <div className="flex flex-wrap gap-1 mt-2">
+                  {collabPrefs!.preferred_roles.map(r => (
+                    <span key={r} className="text-[10px] px-1.5 py-0.5 rounded-full bg-secondary text-muted-foreground">{r}</span>
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </div>
