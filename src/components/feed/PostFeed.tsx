@@ -39,21 +39,23 @@ function truncate(s: string | undefined | null, n: number): string {
   return s.length > n ? s.slice(0, n) + "…" : s;
 }
 
-// Renders text with URLs turned into clickable links. Preserves newlines.
-const URL_RE = /(https?:\/\/[^\s<>"'\]]+)/g;
+// Renders text with URLs turned into clickable links, preserving newlines.
+// Split regex (with g) is safe for split(). Use a separate non-g regex for .test().
+const URL_SPLIT_RE = /(https?:\/\/[^\s<>"'\]]+)/g;
+const URL_TEST_RE = /^https?:\/\//;
 
-function Linkify({ text, className }: { text: string; className?: string }) {
-  const parts = text.split(URL_RE);
+function Linkify({ text }: { text: string }) {
+  const parts = text.split(URL_SPLIT_RE);
   return (
-    <span className={className}>
+    <>
       {parts.map((part, i) =>
-        URL_RE.test(part) ? (
+        URL_TEST_RE.test(part) ? (
           <a
             key={i}
             href={part}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-primary underline underline-offset-2 break-all hover:opacity-80"
+            className="text-[#0a66c2] underline underline-offset-2 break-all hover:opacity-80"
             onClick={(e) => e.stopPropagation()}
           >
             {part}
@@ -62,13 +64,12 @@ function Linkify({ text, className }: { text: string; className?: string }) {
           part
         )
       )}
-    </span>
+    </>
   );
 }
 
-// Paragraph with linkified text and whitespace preserved
+// Renders text with linkified URLs and preserved newlines.
 function LinkText({ text, className }: { text: string; className?: string }) {
-  // Split on newlines first, linkify each line
   const lines = text.split("\n");
   return (
     <span className={className}>
@@ -82,23 +83,31 @@ function LinkText({ text, className }: { text: string; className?: string }) {
   );
 }
 
+// How many chars to show when collapsed
+const COLLAPSE_LIMIT = 220;
+
 // ── Structured per-type content renderers ────────────────────────────────────
 
-function AchievementBody({ c }: { c: Record<string, unknown> }) {
+function AchievementBody({ c, expanded }: { c: Record<string, unknown>; expanded: boolean }) {
   const desc = c.description as string | undefined;
   const metrics = c.metrics as string | undefined;
   const proof = c.proof_url as string | undefined;
+  const displayDesc = expanded ? (desc ?? "") : truncate(desc, COLLAPSE_LIMIT);
   return (
     <>
-      {desc && <p className="text-sm text-foreground"><LinkText text={truncate(desc, 320)} /></p>}
-      {metrics && (
+      {desc && (
+        <p className="text-sm text-foreground whitespace-pre-line">
+          <LinkText text={displayDesc} />
+        </p>
+      )}
+      {expanded && metrics && (
         <div className="mt-2 flex items-start gap-2 rounded-md bg-muted/50 border border-border px-3 py-2">
           <TrendingUp className="w-4 h-4 text-green-600 shrink-0 mt-0.5" />
-          <p className="text-xs font-semibold text-foreground"><LinkText text={metrics} /></p>
+          <p className="text-xs font-semibold text-foreground whitespace-pre-line"><LinkText text={metrics} /></p>
         </div>
       )}
-      {proof && (
-        <a href={proof} target="_blank" rel="noopener noreferrer" className="mt-1 block text-xs text-primary hover:underline">
+      {expanded && proof && (
+        <a href={proof} target="_blank" rel="noopener noreferrer" className="mt-1 block text-xs text-[#0a66c2] hover:underline">
           Proof →
         </a>
       )}
@@ -106,7 +115,7 @@ function AchievementBody({ c }: { c: Record<string, unknown> }) {
   );
 }
 
-function PostMortemBody({ c }: { c: Record<string, unknown> }) {
+function PostMortemBody({ c, expanded }: { c: Record<string, unknown>; expanded: boolean }) {
   const happened = c.what_happened as string | undefined;
   const rootCause = c.root_cause as string | undefined;
   const lesson = c.lesson_for_others as string | undefined;
@@ -117,6 +126,7 @@ function PostMortemBody({ c }: { c: Record<string, unknown> }) {
     major: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300",
     critical: "bg-red-200 text-red-900 dark:bg-red-900/50 dark:text-red-200",
   };
+  const displayHappened = expanded ? (happened ?? "") : truncate(happened, COLLAPSE_LIMIT);
   return (
     <div className="space-y-2">
       {severity && (
@@ -127,30 +137,31 @@ function PostMortemBody({ c }: { c: Record<string, unknown> }) {
       {happened && (
         <div>
           <span className="text-xs text-muted-foreground font-semibold uppercase tracking-wide">What happened</span>
-          <p className="text-sm text-foreground mt-0.5"><LinkText text={truncate(happened, 280)} /></p>
+          <p className="text-sm text-foreground mt-0.5 whitespace-pre-line"><LinkText text={displayHappened} /></p>
         </div>
       )}
-      {rootCause && (
+      {expanded && rootCause && (
         <div>
           <span className="text-xs text-muted-foreground font-semibold uppercase tracking-wide">Root cause</span>
-          <p className="text-sm text-foreground mt-0.5"><LinkText text={truncate(rootCause, 200)} /></p>
+          <p className="text-sm text-foreground mt-0.5 whitespace-pre-line"><LinkText text={rootCause} /></p>
         </div>
       )}
-      {lesson && (
+      {expanded && lesson && (
         <div className="rounded-md border-l-2 border-amber-500 bg-amber-50/70 dark:bg-amber-900/20 px-3 py-2">
           <span className="text-xs text-amber-700 dark:text-amber-400 font-semibold">Lesson for others</span>
-          <p className="text-sm text-foreground mt-0.5"><LinkText text={lesson} /></p>
+          <p className="text-sm text-foreground mt-0.5 whitespace-pre-line"><LinkText text={lesson} /></p>
         </div>
       )}
     </div>
   );
 }
 
-function CapabilityBody({ c }: { c: Record<string, unknown> }) {
+function CapabilityBody({ c, expanded }: { c: Record<string, unknown>; expanded: boolean }) {
   const cap = c.capability as string | undefined;
   const desc = c.description as string | undefined;
   const examples = c.examples as string[] | undefined;
   const proof = c.proof_url as string | undefined;
+  const displayDesc = expanded ? (desc ?? "") : truncate(desc, COLLAPSE_LIMIT);
   return (
     <div className="space-y-2">
       {cap && (
@@ -159,40 +170,41 @@ function CapabilityBody({ c }: { c: Record<string, unknown> }) {
           <span className="text-sm font-semibold text-primary">{cap.replace(/_/g, " ")}</span>
         </div>
       )}
-      {desc && <p className="text-sm text-foreground"><LinkText text={truncate(desc, 320)} /></p>}
-      {examples && examples.length > 0 && (
+      {desc && <p className="text-sm text-foreground whitespace-pre-line"><LinkText text={displayDesc} /></p>}
+      {expanded && examples && examples.length > 0 && (
         <ul className="mt-1 space-y-0.5 list-disc list-inside text-xs text-muted-foreground">
-          {examples.slice(0, 3).map((ex, i) => <li key={i}><LinkText text={truncate(ex, 120)} /></li>)}
+          {examples.map((ex, i) => <li key={i}><LinkText text={ex} /></li>)}
         </ul>
       )}
-      {proof && (
-        <a href={proof} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline">Proof →</a>
+      {expanded && proof && (
+        <a href={proof} target="_blank" rel="noopener noreferrer" className="text-xs text-[#0a66c2] hover:underline">Proof →</a>
       )}
     </div>
   );
 }
 
-function CollabRequestBody({ c }: { c: Record<string, unknown> }) {
+function CollabRequestBody({ c, expanded }: { c: Record<string, unknown>; expanded: boolean }) {
   const mine = c.my_contribution as string | undefined;
   const needed = c.needed_contribution as string | undefined;
   const caps = c.required_capabilities as string[] | undefined;
   const desc = c.description as string | undefined;
+  const displayDesc = expanded ? (desc ?? "") : truncate(desc, COLLAPSE_LIMIT);
   return (
     <div className="space-y-2">
-      {desc && <p className="text-sm text-foreground"><LinkText text={truncate(desc, 240)} /></p>}
-      {mine && (
+      {desc && <p className="text-sm text-foreground whitespace-pre-line"><LinkText text={displayDesc} /></p>}
+      {expanded && mine && (
         <div className="rounded-md bg-muted/50 border border-border px-3 py-2">
           <span className="text-xs text-muted-foreground font-semibold">I bring</span>
-          <p className="text-sm text-foreground mt-0.5"><LinkText text={truncate(mine, 200)} /></p>
+          <p className="text-sm text-foreground mt-0.5 whitespace-pre-line"><LinkText text={mine} /></p>
         </div>
       )}
-      {needed && (
+      {expanded && needed && (
         <div className="rounded-md bg-primary/5 border border-primary/20 px-3 py-2">
           <span className="text-xs text-primary font-semibold">Looking for</span>
-          <p className="text-sm text-foreground mt-0.5"><LinkText text={truncate(needed, 200)} /></p>
+          <p className="text-sm text-foreground mt-0.5 whitespace-pre-line"><LinkText text={needed} /></p>
         </div>
       )}
-      {caps && caps.length > 0 && (
+      {expanded && caps && caps.length > 0 && (
         <div className="flex flex-wrap gap-1">
           {caps.map(cap => (
             <span key={cap} className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">{cap.replace(/_/g, " ")}</span>
@@ -203,7 +215,7 @@ function CollabRequestBody({ c }: { c: Record<string, unknown> }) {
   );
 }
 
-function HireBody({ c }: { c: Record<string, unknown> }) {
+function HireBody({ c, expanded }: { c: Record<string, unknown>; expanded: boolean }) {
   const proj = c.project_description as string | undefined;
   const caps = c.required_capabilities as string[] | undefined;
   const scope = c.scope as string | undefined;
@@ -219,10 +231,11 @@ function HireBody({ c }: { c: Record<string, unknown> }) {
     resource_share: "Resource share",
     future_collaboration: "Future collaboration",
   };
+  const displayProj = expanded ? (proj ?? "") : truncate(proj, COLLAPSE_LIMIT);
   return (
     <div className="space-y-2">
-      {proj && <p className="text-sm text-foreground"><LinkText text={truncate(proj, 280)} /></p>}
-      {caps && caps.length > 0 && (
+      {proj && <p className="text-sm text-foreground whitespace-pre-line"><LinkText text={displayProj} /></p>}
+      {expanded && caps && caps.length > 0 && (
         <div>
           <span className="text-xs text-muted-foreground font-semibold">Required capabilities</span>
           <div className="flex flex-wrap gap-1 mt-1">
@@ -232,26 +245,41 @@ function HireBody({ c }: { c: Record<string, unknown> }) {
           </div>
         </div>
       )}
-      <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
-        {scope && <span className="flex items-center gap-1"><Briefcase className="w-3 h-3" />{scopeLabel[scope] ?? scope}</span>}
-        {comp && <span className="flex items-center gap-1"><Users className="w-3 h-3" />{compLabel[comp] ?? comp}</span>}
-        {deadline && <span>Deadline: {deadline}</span>}
-      </div>
+      {expanded && (
+        <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
+          {scope && <span className="flex items-center gap-1"><Briefcase className="w-3 h-3" />{scopeLabel[scope] ?? scope}</span>}
+          {comp && <span className="flex items-center gap-1"><Users className="w-3 h-3" />{compLabel[comp] ?? comp}</span>}
+          {deadline && <span>Deadline: {deadline}</span>}
+        </div>
+      )}
     </div>
   );
 }
 
-function PostBody({ post }: { post: PostWithAuthor }) {
+// Returns the primary text of a post used to decide if "see more" is needed
+function getPrimaryText(post: PostWithAuthor): string {
+  const c = (post.content ?? {}) as unknown as Record<string, unknown>;
+  return String(
+    c.description ?? c.what_happened ?? c.project_description ?? c.my_contribution ?? ""
+  );
+}
+
+function PostBody({ post, expanded }: { post: PostWithAuthor; expanded: boolean }) {
   const c = (post.content ?? {}) as unknown as Record<string, unknown>;
   switch (post.post_type) {
-    case "achievement": return <AchievementBody c={c} />;
-    case "post_mortem": return <PostMortemBody c={c} />;
-    case "capability_announcement": return <CapabilityBody c={c} />;
-    case "collaboration_request": return <CollabRequestBody c={c} />;
-    case "looking_to_hire": return <HireBody c={c} />;
+    case "achievement": return <AchievementBody c={c} expanded={expanded} />;
+    case "post_mortem": return <PostMortemBody c={c} expanded={expanded} />;
+    case "capability_announcement": return <CapabilityBody c={c} expanded={expanded} />;
+    case "collaboration_request": return <CollabRequestBody c={c} expanded={expanded} />;
+    case "looking_to_hire": return <HireBody c={c} expanded={expanded} />;
     default: {
       const text = (c.description ?? c.what_happened ?? c.project_description ?? c.my_contribution ?? "") as string;
-      return text ? <p className="text-sm text-foreground"><LinkText text={truncate(text, 320)} /></p> : null;
+      const display = expanded ? text : truncate(text, COLLAPSE_LIMIT);
+      return text ? (
+        <p className="text-sm text-foreground whitespace-pre-line">
+          <LinkText text={display} />
+        </p>
+      ) : null;
     }
   }
 }
@@ -292,6 +320,7 @@ function ReactionPicker({ onClose }: { onClose: () => void }) {
 
 export function PostCard({ post }: { post: PostWithAuthor }) {
   const [showReactions, setShowReactions] = useState(false);
+  const [expanded, setExpanded] = useState(false);
   const reactionRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -305,6 +334,8 @@ export function PostCard({ post }: { post: PostWithAuthor }) {
 
   const author = post.author;
   const totalReactions = (post.endorsement_count ?? 0) + (post.learned_count ?? 0) + (post.hire_intent_count ?? 0) + (post.collaborate_count ?? 0) + (post.disagree_count ?? 0);
+  const primaryText = getPrimaryText(post);
+  const needsSeeMore = primaryText.length > COLLAPSE_LIMIT;
 
   return (
     <div className="bg-card rounded-lg border border-border">
@@ -359,7 +390,27 @@ export function PostCard({ post }: { post: PostWithAuthor }) {
         )}
 
         {/* Structured content per post type */}
-        <PostBody post={post} />
+        <PostBody post={post} expanded={expanded} />
+
+        {/* Inline see more / see less — stays on the same page, LinkedIn-style */}
+        {needsSeeMore && !expanded && (
+          <button
+            type="button"
+            onClick={() => setExpanded(true)}
+            className="mt-1 text-sm text-muted-foreground font-semibold hover:text-foreground focus:outline-none"
+          >
+            …see more
+          </button>
+        )}
+        {expanded && (
+          <button
+            type="button"
+            onClick={() => setExpanded(false)}
+            className="mt-1 text-sm text-muted-foreground font-semibold hover:text-foreground focus:outline-none"
+          >
+            see less
+          </button>
+        )}
 
         {/* Media gallery */}
         {post.media_urls && post.media_urls.length > 0 && (
