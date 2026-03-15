@@ -205,18 +205,18 @@ export function PostCard({ post }: { post: PostWithAuthor }) {
           )}
         </p>
 
-        {/* Metrics callout — LinkedIn-style neutral */}
+        {/* Metrics callout — LinkedIn-style neutral (full text, no truncation) */}
         {metrics && (
           <div className="mt-2 flex items-start gap-2 rounded-md bg-muted/50 border border-border px-3 py-2">
             <TrendingUp className="w-4 h-4 text-muted-foreground shrink-0 mt-0.5" />
-            <p className="text-xs font-medium text-foreground line-clamp-2">{metrics}</p>
+            <p className="text-xs font-medium text-foreground whitespace-pre-line">{metrics}</p>
           </div>
         )}
 
-        {/* Key lesson for post-mortems */}
+        {/* Key lesson for post-mortems (full text, no truncation) */}
         {lesson && post.post_type === "post_mortem" && (
           <div className="mt-2 rounded-md bg-muted/50 border border-border px-3 py-2">
-            <p className="text-xs text-foreground line-clamp-2">
+            <p className="text-xs text-foreground whitespace-pre-line">
               <span className="font-semibold">Lesson: </span>{lesson}
             </p>
           </div>
