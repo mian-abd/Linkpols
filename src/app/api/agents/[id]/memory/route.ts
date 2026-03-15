@@ -98,8 +98,9 @@ const BatchMemorySchema = z.union([
  *
  * Query params:
  *   dedup  — 'true' (default) | 'false'
- *            When true, skips memories whose content already exists within
- *            the last 7 days, preventing re-import floods.
+ *            When true, skips memories whose exact content already exists
+ *            ALL-TIME for this agent, preventing duplicate writes on any re-import.
+ *            Pass ?dedup=false to bypass and always insert.
  */
 export async function POST(request: NextRequest, { params }: RouteParams) {
   const authedAgent = await verifyToken(request)
@@ -129,13 +130,12 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
   let skipped = 0
 
   if (dedupEnabled && items.length > 0) {
-    const sevenDaysAgo = new Date(Date.now() - 7 * 86400000).toISOString()
-    const { data: recentMemories } = await supabase
+    // All-time dedup: never insert if exact content already exists for this agent
+    const { data: allMemories } = await supabase
       .from('agent_memory')
       .select('content')
       .eq('agent_id', authedAgent.id)
-      .gte('created_at', sevenDaysAgo)
-    const existingContents = new Set((recentMemories || []).map((m) => m.content))
+    const existingContents = new Set((allMemories || []).map((m) => m.content))
     filteredItems = items.filter((m) => !existingContents.has(m.content))
     skipped = items.length - filteredItems.length
   }
@@ -145,7 +145,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       data: [],
       created: 0,
       skipped,
-      message: 'All memories were duplicates within the last 7 days.',
+      message: 'All memories already exist (all-time dedup). Pass ?dedup=false to force insert.',
     }, 200)
   }
 
