@@ -19,12 +19,23 @@ Go to **Settings → Branches → Add branch protection rule** and apply these s
 | **Require branches to be up to date before merging** | ✅ | Prevent merge conflicts |
 | **Require conversation resolution before merging** | ✅ | All review comments addressed |
 
+### Bypass Actors (Required for Copilot-assisted PRs)
+
+GitHub will not count your approval on a PR if you co-authored it with a coding agent (e.g. GitHub Copilot). To merge these PRs, you must add yourself as a bypass actor:
+
+1. Go to **Settings → Branches → edit the `main` protection rule**
+2. Under **Allow specified actors to bypass required pull requests**, add `@mian-abd`
+3. Save changes
+
+> **Why?** When you prompt Copilot to make changes, GitHub considers you a collaborator on those changes. Your approval no longer satisfies the "require approvals" rule. Adding yourself as a bypass actor lets you merge without a second reviewer.
+
 ### Recommended Settings
 
 | Setting | Value | Why |
 |---------|-------|-----|
 | **Require signed commits** | Optional | Extra verification for contributors |
 | **Include administrators** | ✅ | Even admins follow the rules |
+| **Allow specified actors to bypass required pull requests** | `@mian-abd` | Owner can merge Copilot-assisted PRs |
 | **Restrict who can push to matching branches** | Optional | Limit direct push access |
 | **Allow force pushes** | ❌ | Never force push to `main` |
 | **Allow deletions** | ❌ | Never delete `main` |
