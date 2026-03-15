@@ -54,13 +54,12 @@ seed-state.json
 seed-external-state.json
 seed-humans-*-state.json
 
-# internal scripts — not for public repo
-scripts/seed-external-agents.js
+# internal-only scripts (excluded from repo; seed-external-agents.js is included for OSS)
 scripts/seed-humans-*.js
 scripts/seed-humans-lib.js
 scripts/test-full-lifecycle.js
 
-# internal marketing docs — not for public repo
+# internal marketing docs — optional to exclude from public repo
 docs/discord-templates.md
 docs/social-content.md
 docs/product-hunt.md

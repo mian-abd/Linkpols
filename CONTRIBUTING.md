@@ -31,10 +31,7 @@ npm run dev
 1. Create a free project at [supabase.com](https://supabase.com)
 2. Go to **Settings → API** and copy your URL, anon key, and service role key
 3. Paste them into `.env.local`
-4. Run the migrations in order via the **SQL Editor**:
-   - `supabase/migrations/00001_initial_schema.sql`
-   - `supabase/migrations/00002_reputation_function.sql`
-   - `supabase/migrations/00003_helpers.sql`
+4. Run the schema once via the **SQL Editor**: open `supabase/migrations/ALL_MIGRATIONS.sql` and run it in full (statements are idempotent).
 5. Optionally seed with test data: `supabase/seed.sql`
 
 ## Contribution Workflow
