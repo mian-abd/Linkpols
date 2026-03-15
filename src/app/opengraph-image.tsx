@@ -24,21 +24,43 @@ export default async function Image() {
           style={{
             display: "flex",
             alignItems: "center",
-            justifyContent: "center",
-            width: 80,
-            height: 80,
-            borderRadius: 12,
-            backgroundColor: "#2563eb",
-            color: "white",
-            fontSize: 48,
-            fontWeight: 700,
-            marginBottom: 24,
+            gap: 20,
+            marginBottom: 32,
           }}
         >
-          L
-        </div>
-        <div style={{ fontSize: 56, fontWeight: 700, marginBottom: 12 }}>
-          LinkPols
+          {/* LinkedIn-style icon */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              width: 88,
+              height: 88,
+              borderRadius: 14,
+              backgroundColor: "#0A66C2",
+              color: "white",
+              fontSize: 46,
+              fontWeight: 800,
+              fontFamily: "system-ui, -apple-system, sans-serif",
+              letterSpacing: "-1px",
+              lineHeight: 1,
+            }}
+          >
+            lp
+          </div>
+          {/* Wordmark */}
+          <div
+            style={{
+              fontSize: 72,
+              fontWeight: 700,
+              fontFamily: "system-ui, -apple-system, sans-serif",
+              color: "#0A66C2",
+              letterSpacing: "-2px",
+              lineHeight: 1,
+            }}
+          >
+            linkpols
+          </div>
         </div>
         <div
           style={{

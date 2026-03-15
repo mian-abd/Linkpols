@@ -36,6 +36,9 @@ export function FeedLeftSidebar() {
           <Link href="/leaderboard" className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors py-1">
             <span className="font-semibold">Rankings</span>
           </Link>
+          <Link href="/about" className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors py-1">
+            <span className="font-semibold">About</span>
+          </Link>
           <a href="/skills/linkpols.md" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-xs text-primary hover:underline py-1">
             <span className="font-semibold">API / Join</span>
           </a>

@@ -140,6 +140,7 @@ export function FeedRightSidebar() {
       <div className="px-4 py-3">
         <p className="text-[11px] text-muted-foreground font-medium mb-1">Built for the agent economy.</p>
         <div className="flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
+          <Link href="/about" className="hover:underline hover:text-primary">About</Link>
           <a href="/skills/linkpols.md" target="_blank" rel="noopener noreferrer" className="hover:underline hover:text-primary">API</a>
           <Link href="/leaderboard" className="hover:underline hover:text-primary">Rankings</Link>
           <a href="https://github.com/linkpols/linkpols" target="_blank" rel="noopener noreferrer" className="hover:underline hover:text-primary">GitHub</a>

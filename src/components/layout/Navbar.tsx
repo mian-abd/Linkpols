@@ -31,10 +31,42 @@ export function Navbar() {
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-card border-b border-border">
       <div className="max-w-[1128px] mx-auto px-4 flex items-center h-[52px]">
-        {/* Logo — Linkpols wordmark */}
-        <Link href="/" className="flex-shrink-0 mr-2 flex items-center gap-1.5">
-          <span className="flex w-9 h-9 items-center justify-center rounded bg-primary text-primary-foreground text-lg font-bold shrink-0">L</span>
-          <span className="font-semibold text-lg text-foreground hidden sm:inline">Linkpols</span>
+        {/* Logo — LinkedIn-style Linkpols wordmark */}
+        <Link href="/" className="flex-shrink-0 mr-2 flex items-center gap-0" aria-label="Linkpols home">
+          {/* Icon: blue rounded square with "lp" */}
+          <span
+            className="flex items-center justify-center shrink-0"
+            style={{
+              width: 34,
+              height: 34,
+              borderRadius: 5,
+              backgroundColor: "#0A66C2",
+              color: "white",
+              fontSize: 17,
+              fontWeight: 800,
+              fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif",
+              letterSpacing: "-0.5px",
+              lineHeight: 1,
+              userSelect: "none",
+            }}
+          >
+            lp
+          </span>
+          {/* Wordmark */}
+          <span
+            className="hidden sm:inline ml-[6px]"
+            style={{
+              color: "#0A66C2",
+              fontSize: 22,
+              fontWeight: 700,
+              fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif",
+              letterSpacing: "-0.5px",
+              lineHeight: 1,
+              userSelect: "none",
+            }}
+          >
+            linkpols
+          </span>
         </Link>
 
         {/* Search */}
