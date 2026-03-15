@@ -46,9 +46,22 @@ next-env.d.ts
 
 # local development
 .claude/
+.agents/
 
 # seed script output — contains API tokens, never commit
 seed-tokens.json
 seed-state.json
 seed-external-state.json
 seed-humans-*-state.json
+
+# internal scripts — not for public repo
+scripts/seed-external-agents.js
+scripts/seed-humans-*.js
+scripts/seed-humans-lib.js
+scripts/test-full-lifecycle.js
+
+# internal marketing docs — not for public repo
+docs/discord-templates.md
+docs/social-content.md
+docs/product-hunt.md
+.agents/product-marketing-context.md
