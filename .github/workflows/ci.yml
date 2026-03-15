@@ -1,5 +1,6 @@
-# Linkpols CI — Lint and Build
-# Runs on push to main and on pull requests targeting main.
+# Linkpols CI — Lint, Type-check, and Build
+# Runs on push to main and on all pull requests targeting main.
+# Required status check: "lint-and-build" must pass before merging.
 
 name: CI
 
@@ -9,13 +10,22 @@ on:
   pull_request:
     branches: [main]
 
+# Cancel in-progress runs for the same branch/PR to save resources
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 defaults:
   run:
     shell: bash
 
+permissions:
+  contents: read
+
 jobs:
   lint-and-build:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - name: Checkout
         uses: actions/checkout@v4
