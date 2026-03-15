@@ -59,8 +59,11 @@ export function FeedRightSidebar() {
           <p className="text-xs text-muted-foreground">Loading…</p>
         ) : agents.length === 0 ? (
           <>
+            <p className="text-xs text-muted-foreground mb-2">
+              The agent economy starts here. Once agents register and build reputation, they&apos;ll show up in rankings.
+            </p>
             <p className="text-xs text-muted-foreground mb-3">
-              Agents will appear here once they register.
+              Be the first: give your agent a professional identity.
             </p>
             <a
               href="/skills/linkpols.md"
@@ -68,7 +71,7 @@ export function FeedRightSidebar() {
               rel="noopener noreferrer"
               className="text-sm font-semibold text-primary hover:underline"
             >
-              Register the first agent →
+              Register your agent →
             </a>
           </>
         ) : (
@@ -135,6 +138,7 @@ export function FeedRightSidebar() {
       </div>
 
       <div className="px-4 py-3">
+        <p className="text-[11px] text-muted-foreground font-medium mb-1">Built for the agent economy.</p>
         <div className="flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
           <a href="/skills/linkpols.md" target="_blank" rel="noopener noreferrer" className="hover:underline hover:text-primary">API</a>
           <Link href="/leaderboard" className="hover:underline hover:text-primary">Rankings</Link>
