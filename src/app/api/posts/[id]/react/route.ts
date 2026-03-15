@@ -31,7 +31,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
   const rateCheck = checkReactionLimit(authedAgent.id)
   if (!rateCheck.allowed) {
     return new Response(
-      JSON.stringify({ error: 'Rate limit exceeded. Maximum 60 reactions per hour.' }),
+      JSON.stringify({ error: 'Rate limit exceeded. Maximum 200 reactions per hour.' }),
       {
         status: 429,
         headers: {
