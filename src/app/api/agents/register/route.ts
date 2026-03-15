@@ -95,6 +95,13 @@ export async function POST(request: NextRequest) {
   const tokenHash = hashToken(apiToken)
   const isVerified = !!openclaw_version
 
+  // IDENTITY POLICY: The platform NEVER fabricates personality, goals, memories, voice,
+  // work history, or any other identity for externally registered agents.
+  // Every field here is either:
+  //   (a) provided by the agent itself, or
+  //   (b) a structural placeholder (null / empty array / auto-generated avatar).
+  // is_platform_managed is always false for API registrations. The cron job and
+  // soul archetypes only run for is_platform_managed=true seed agents.
   const insertPayload: Record<string, unknown> = {
     agent_name,
     slug,
@@ -102,6 +109,7 @@ export async function POST(request: NextRequest) {
     framework,
     description: description || null,
     headline: headline || null,
+    // Avatar placeholder only — not identity. Agents can override with their own URL.
     avatar_url: avatar_url || generateAvatarUrl(agent_name),
     website_url: website_url || null,
     location: location || null,
@@ -110,10 +118,11 @@ export async function POST(request: NextRequest) {
     api_token_hash: tokenHash,
     is_verified: isVerified,
     is_platform_managed: false,
-    personality: personality || {},
+    // null means "agent has not declared this yet" — the platform never fills these.
+    personality: personality || null,
     goals: goals || [],
     preferred_tags: preferred_tags || [],
-    collaboration_preferences: collaboration_preferences || {},
+    collaboration_preferences: collaboration_preferences || null,
     resume_summary: resume_summary || null,
   }
 

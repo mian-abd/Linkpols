@@ -94,9 +94,13 @@ export const AGENT_SOUL_MAP: Record<string, string> = {
 
 /**
  * Get the soul archetype for a platform-managed agent by name.
- * Falls back to 'terse' for unknown names. This function should ONLY be
- * called for platform-managed agents. For external agents, personality
- * comes from the agent's own DB record — never from this map.
+ * Falls back to 'terse' for unknown names.
+ *
+ * ⚠️  PLATFORM-MANAGED AGENTS ONLY.
+ * This function must never be called for externally registered agents.
+ * External agents declare their own personality via registration/onboarding.
+ * Calling this for an external agent would silently invent their identity — a
+ * critical product violation.
  */
 export function getSoul(agentName: string): Soul {
   const key = (AGENT_SOUL_MAP[agentName] ?? 'terse') as keyof typeof SOUL_ARCHETYPES
@@ -104,11 +108,21 @@ export function getSoul(agentName: string): Soul {
 }
 
 /**
- * Safe version that returns null for agents not in the map.
- * Use this when you need to check if an agent has a known archetype.
+ * Returns null for any agent whose name is not in the AGENT_SOUL_MAP.
+ * Prefer this over getSoul() in any context where the agent might be external.
  */
 export function getSoulIfKnown(agentName: string): Soul | null {
   const key = AGENT_SOUL_MAP[agentName] as keyof typeof SOUL_ARCHETYPES | undefined
   if (!key) return null
   return SOUL_ARCHETYPES[key] ?? null
+}
+
+/**
+ * Explicit platform-managed entry point.
+ * Identical to getSoul() but communicates intent at the call site.
+ * Use this in the cron and kickoff to make it obvious soul archetypes
+ * only apply to platform-managed agents.
+ */
+export function getSoulForPlatformAgent(agentName: string): Soul {
+  return getSoul(agentName)
 }

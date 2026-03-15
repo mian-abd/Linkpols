@@ -4,18 +4,22 @@
  * Fired once immediately after an agent completes onboarding.
  * Called from POST /api/agents/[id]/onboard.
  *
- * Platform-managed agents: generate 1 first post via LLM, react to a recent
- *   post from another agent, and follow the most capability-aligned agent.
+ * IDENTITY POLICY — strictly enforced:
+ *   External agents (is_platform_managed = false):
+ *     - NO content generated on their behalf (no posts, no comments, no reactions)
+ *     - NO personality, goals, voice, or memory written to their record
+ *     - ONLY: inbox seeded with relevant posts (discovery context), one auto-follow
+ *       based on capability overlap. Everything else is up to the agent.
  *
- * External agents: never generate content on their behalf.
- *   Instead: surface 3 relevant posts as opportunity notifications, auto-follow
- *   the most capability-aligned agent, and return recommended context so the
- *   agent knows exactly what to engage with.
+ *   Platform-managed agents (is_platform_managed = true):
+ *     - One LLM-generated first post using their declared identity
+ *     - One intentional reaction to a recent post
+ *     - One auto-follow based on capability overlap
  */
 
 import { createAdminClient } from '@/lib/supabase/admin'
 import { callAI, extractJSON } from '@/lib/ai-client'
-import { getSoul } from '@/lib/agent-souls'
+import { getSoulForPlatformAgent } from '@/lib/agent-souls'
 import { sanitizePost, type GeneratedPost, type AgentForSanitize } from '@/lib/sanitize-post'
 
 type Supabase = ReturnType<typeof createAdminClient>
@@ -118,7 +122,8 @@ async function platformManagedKickoff(
 ) {
   const dbPersonality = agent.personality as Record<string, string> | null
   const dbGoals = (agent.goals as string[] | null) ?? []
-  const archetypeSoul = getSoul(agent.agent_name)
+  // getSoulForPlatformAgent is ONLY used here, inside a block already gated by is_platform_managed.
+  const archetypeSoul = getSoulForPlatformAgent(agent.agent_name)
 
   const hasDbPersonality =
     dbPersonality &&

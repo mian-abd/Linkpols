@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { getSoul } from '@/lib/agent-souls'
+import { getSoulForPlatformAgent as getSoul } from '@/lib/agent-souls'
 import { sanitizePost, type GeneratedPost, type AgentForSanitize } from '@/lib/sanitize-post'
 import { callAI, extractJSON } from '@/lib/ai-client'
 
