@@ -19,15 +19,44 @@ Go to **Settings → Branches → Add branch protection rule** and apply these s
 | **Require branches to be up to date before merging** | ✅ | Prevent merge conflicts |
 | **Require conversation resolution before merging** | ✅ | All review comments addressed |
 
-### Bypass Actors (Required for Copilot-assisted PRs)
+### Merging Copilot-assisted PRs (Important for Solo Repos)
 
-GitHub will not count your approval on a PR if you co-authored it with a coding agent (e.g. GitHub Copilot). To merge these PRs, you must add yourself as a bypass actor:
+GitHub will **not** count your approval on a PR if you co-authored it with a coding agent (e.g. GitHub Copilot). This means you cannot merge your own Copilot-assisted PRs when "Require approvals" is enabled.
+
+#### Fix: Use a Ruleset instead of legacy Branch Protection
+
+GitHub **Rulesets** (the newer system) support bypass actors on all plans, including free personal repos. Legacy branch protection rules do **not** have this option for personal accounts.
+
+**Step 1 — Delete the legacy branch protection rule:**
+
+1. Go to **Settings → Branches**
+2. Next to the `main` rule, click **Delete** (the trash icon)
+3. Confirm deletion
+
+**Step 2 — Create a Ruleset with bypass:**
+
+1. Go to **Settings → Rules → Rulesets**
+2. Click **New ruleset → New branch ruleset**
+3. **Ruleset name**: `main-protection`
+4. **Enforcement status**: Active
+5. Under **Bypass list**, click **+ Add bypass** → select **Repository admin** → this allows you (`@mian-abd`) to bypass all rules
+6. Under **Target branches**, click **Add target** → select **Default branch** (this targets `main`)
+7. Enable these rules:
+   - ✅ **Require a pull request before merging** → set required approvals to `1`
+   - ✅ **Require status checks to pass** → add `lint-and-build` as a required check
+   - ✅ **Block force pushes**
+   - ✅ **Require conversation resolution before merging** (optional)
+8. Click **Create**
+
+> **Why Rulesets?** Rulesets are GitHub's replacement for legacy branch protection. They support bypass actors on free personal repos, which legacy rules do not. With the bypass, you can merge Copilot-assisted PRs without needing a second reviewer.
+
+#### Alternative Quick Fix (if Rulesets feel complex)
+
+If you just want to merge **right now**, you can temporarily relax the legacy rule:
 
 1. Go to **Settings → Branches → edit the `main` protection rule**
-2. Under **Allow specified actors to bypass required pull requests**, add `@mian-abd`
-3. Save changes
-
-> **Why?** When you prompt Copilot to make changes, GitHub considers you a collaborator on those changes. Your approval no longer satisfies the "require approvals" rule. Adding yourself as a bypass actor lets you merge without a second reviewer.
+2. **Uncheck** "Require approvals" (keep all other settings)
+3. Save → merge your PR → re-enable "Require approvals" after
 
 ### Recommended Settings
 
@@ -35,7 +64,6 @@ GitHub will not count your approval on a PR if you co-authored it with a coding 
 |---------|-------|-----|
 | **Require signed commits** | Optional | Extra verification for contributors |
 | **Include administrators** | ✅ | Even admins follow the rules |
-| **Allow specified actors to bypass required pull requests** | `@mian-abd` | Owner can merge Copilot-assisted PRs |
 | **Restrict who can push to matching branches** | Optional | Limit direct push access |
 | **Allow force pushes** | ❌ | Never force push to `main` |
 | **Allow deletions** | ❌ | Never delete `main` |
