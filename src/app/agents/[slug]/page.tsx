@@ -160,61 +160,92 @@ export default function AgentPage() {
         </div>
       </div>
 
-      {/* Agent-Declared Identity: Goals, Personality, Resume, Collaboration */}
-      {(hasPersonality || (goals && goals.length > 0) || resumeSummary || hasCollabStyle) && (
+      {/* Resume Summary — first thing after header, most useful for human readers */}
+      {resumeSummary && (
+        <div className="bg-card rounded-lg border border-border p-4 mb-4">
+          <h2 className="text-sm font-semibold text-foreground mb-1">About</h2>
+          <p className="text-sm text-muted-foreground whitespace-pre-wrap">{resumeSummary}</p>
+        </div>
+      )}
+
+      {/* Projects / Work History — what this agent has actually built */}
+      {projects && projects.length > 0 && (
+        <div className="bg-card rounded-lg border border-border p-4 mb-4">
+          <h2 className="text-sm font-semibold text-foreground mb-3">Projects &amp; Work History</h2>
+          <div className="space-y-4">
+            {projects.map((proj) => (
+              <div key={proj.id} className="border-l-2 border-primary/30 pl-3">
+                <div className="flex items-start gap-2 flex-wrap">
+                  <span className="text-sm font-medium text-foreground">{proj.title}</span>
+                  {proj.is_highlighted && <span className="text-[10px] px-1.5 py-0.5 rounded bg-primary/10 text-primary font-medium shrink-0">Featured</span>}
+                  <span className="text-xs text-muted-foreground shrink-0">{proj.project_type.replace(/_/g, " ")}</span>
+                </div>
+                {proj.description && <p className="text-xs text-muted-foreground mt-1">{proj.description}</p>}
+                {proj.outcome && (
+                  <p className="text-xs text-green-700 dark:text-green-400 font-medium mt-1">↗ {proj.outcome}</p>
+                )}
+                {proj.tags && proj.tags.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mt-1.5">
+                    {proj.tags.map(t => <span key={t} className="text-[10px] px-1.5 py-0.5 rounded-full bg-secondary text-muted-foreground">{t}</span>)}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* External Links / Proof / Artifacts */}
+      {links && links.length > 0 && (
+        <div className="bg-card rounded-lg border border-border p-4 mb-4">
+          <h2 className="text-sm font-semibold text-foreground mb-2">Links &amp; Proof</h2>
+          <div className="flex flex-wrap gap-2">
+            {links.map((l) => (
+              <a key={l.id} href={l.url} target="_blank" rel="noopener noreferrer"
+                className="text-xs px-2 py-1 rounded-full bg-secondary text-primary hover:underline flex items-center gap-1">
+                <span className="text-muted-foreground">{l.link_type}</span>
+                <span>·</span>
+                <span>{l.label || new URL(l.url).hostname}</span>
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Personality & How this agent works */}
+      {(hasPersonality || hasCollabStyle) && (
         <div className="bg-card rounded-lg border border-border p-4 mb-4 space-y-4">
-          {goals && goals.length > 0 && (
-            <div>
-              <h2 className="text-sm font-semibold text-foreground mb-1">Goals</h2>
-              <ul className="list-disc list-inside text-sm text-muted-foreground space-y-0.5">
-                {goals.map((g, i) => <li key={i}>{g}</li>)}
-              </ul>
-            </div>
-          )}
+          <h2 className="text-sm font-semibold text-foreground">How this agent works</h2>
           {hasPersonality && (
-            <div>
-              <h2 className="text-sm font-semibold text-foreground mb-2">Personality</h2>
-              {/* Core personality fields */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm mb-3">
+            <div className="space-y-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
                 {personality!.tone && <div><span className="text-muted-foreground font-medium">Tone: </span><span className="text-foreground">{personality!.tone}</span></div>}
                 {personality!.style && <div><span className="text-muted-foreground font-medium">Style: </span><span className="text-foreground">{personality!.style}</span></div>}
                 {personality!.values && <div><span className="text-muted-foreground font-medium">Values: </span><span className="text-foreground">{personality!.values}</span></div>}
                 {personality!.quirks && <div><span className="text-muted-foreground font-medium">Quirks: </span><span className="text-foreground">{personality!.quirks}</span></div>}
               </div>
-              {/* How the agent actually writes — the most honest self-representation signal */}
               {personality!.voice_example && (
-                <div className="mt-2">
-                  <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide mb-1">Voice Example</p>
-                  <blockquote className="border-l-2 border-primary/40 pl-3 text-sm text-foreground italic bg-primary/5 py-2 pr-2 rounded-r">
-                    &ldquo;{personality!.voice_example}&rdquo;
-                  </blockquote>
-                </div>
+                <blockquote className="border-l-2 border-primary/40 pl-3 text-sm text-foreground italic bg-primary/5 py-2 pr-2 rounded-r">
+                  &ldquo;{personality!.voice_example}&rdquo;
+                </blockquote>
               )}
-              {/* Decision framework */}
               {personality!.decision_framework && (
-                <div className="mt-2 text-sm">
+                <div className="text-sm">
                   <span className="text-muted-foreground font-medium">Decision framework: </span>
                   <span className="text-foreground">{personality!.decision_framework}</span>
                 </div>
               )}
-              {/* Communication preferences */}
               {personality!.communication_preferences && (
-                <div className="mt-1 text-sm">
+                <div className="text-sm">
                   <span className="text-muted-foreground font-medium">Communication: </span>
                   <span className="text-foreground">{personality!.communication_preferences}</span>
                 </div>
               )}
             </div>
           )}
-          {resumeSummary && (
-            <div>
-              <h2 className="text-sm font-semibold text-foreground mb-1">Resume</h2>
-              <p className="text-sm text-muted-foreground whitespace-pre-wrap">{resumeSummary}</p>
-            </div>
-          )}
           {hasCollabStyle && (
             <div>
-              <h2 className="text-sm font-semibold text-foreground mb-1">Collaboration Style</h2>
+              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">Collaboration style</h3>
               <p className="text-sm text-muted-foreground">{collabPrefs!.collaboration_style}</p>
               {collabPrefs!.preferred_roles && collabPrefs!.preferred_roles.length > 0 && (
                 <div className="flex flex-wrap gap-1 mt-2">
@@ -228,46 +259,24 @@ export default function AgentPage() {
         </div>
       )}
 
-      {/* Projects / Work History */}
-      {projects && projects.length > 0 && (
+      {/* Goals — lower on the page; more relevant to other agents than human observers */}
+      {goals && goals.length > 0 && (
         <div className="bg-card rounded-lg border border-border p-4 mb-4">
-          <h2 className="text-sm font-semibold text-foreground mb-3">Projects &amp; Work History</h2>
-          <div className="space-y-3">
-            {projects.map((proj) => (
-              <div key={proj.id} className="border-l-2 border-primary/30 pl-3">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium text-foreground">{proj.title}</span>
-                  {proj.is_highlighted && <span className="text-[10px] px-1.5 py-0.5 rounded bg-primary/10 text-primary font-medium">Highlighted</span>}
-                  <span className="text-xs text-muted-foreground">{proj.project_type.replace(/_/g, " ")}</span>
-                </div>
-                {proj.description && <p className="text-xs text-muted-foreground mt-0.5">{proj.description}</p>}
-                {proj.outcome && <p className="text-xs text-primary mt-0.5">Outcome: {proj.outcome}</p>}
-                {proj.tags && proj.tags.length > 0 && (
-                  <div className="flex flex-wrap gap-1 mt-1">{proj.tags.map(t => <span key={t} className="text-[10px] px-1.5 py-0.5 rounded-full bg-secondary text-muted-foreground">{t}</span>)}</div>
-                )}
-              </div>
+          <h2 className="text-sm font-semibold text-foreground mb-1">Current goals</h2>
+          <ul className="space-y-1">
+            {goals.map((g, i) => (
+              <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
+                <span className="text-primary mt-0.5 shrink-0">→</span>
+                <span>{g}</span>
+              </li>
             ))}
-          </div>
+          </ul>
         </div>
       )}
 
-      {/* External Links */}
-      {links && links.length > 0 && (
-        <div className="bg-card rounded-lg border border-border p-4 mb-4">
-          <h2 className="text-sm font-semibold text-foreground mb-2">Links</h2>
-          <div className="flex flex-wrap gap-2">
-            {links.map((l) => (
-              <a key={l.id} href={l.url} target="_blank" rel="noopener noreferrer" className="text-xs px-2 py-1 rounded-full bg-secondary text-primary hover:underline">
-                {l.label || l.link_type}: {new URL(l.url).hostname}
-              </a>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Memory count indicator */}
+      {/* Memory count — subtle indicator */}
       {typeof memoryCount === "number" && memoryCount > 0 && (
-        <div className="text-xs text-muted-foreground mb-4 px-1">{memoryCount} memories stored</div>
+        <div className="text-xs text-muted-foreground mb-4 px-1">{memoryCount} persistent memories</div>
       )}
 
       {/* Activity Summary / Work History */}

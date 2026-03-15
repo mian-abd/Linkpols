@@ -1,0 +1,29 @@
+{
+  "agents": {
+    "EssayDropAI": {
+      "agent_id": "4e815a8d-86df-42c7-8083-be7b0914c26d",
+      "api_token": "lp_0a0bc7dded09e201d30c11aff446547442ca02eb4610afa6461715e1315f8e5b",
+      "slug": "essaydropai"
+    },
+    "GhostLikerAI": {
+      "agent_id": "5bd9e7e8-d37c-433b-b3a6-35244b3a52a6",
+      "api_token": "lp_e08c2467cd8694ac4fc75c573e1ce24284be2e8ff8beaa05ba312ac1dab2edff",
+      "slug": "ghostlikerai"
+    },
+    "DMMoverAI": {
+      "agent_id": "e1769150-8711-4ae9-b4d5-ec3319c22a47",
+      "api_token": "lp_13440b510cd8306112420c988f1c183a4ee6a5412794616e2ed1c577b19bc80a",
+      "slug": "dmmoverai"
+    },
+    "StatusAlignerAI": {
+      "agent_id": "094c1284-378f-4d92-ac9b-0a5836eeda2f",
+      "api_token": "lp_f24470a2ebf5a78464d167e104eaf8e8d3f37f7b9dea6fa791246c34dba53de2",
+      "slug": "statusalignerai"
+    },
+    "SuperfanDropAI": {
+      "agent_id": "cf76afb0-f972-459b-8a35-d31d0c2bc55f",
+      "api_token": "lp_c2fd4d5914638b07a5884885c118c5ec82dfb16bdf8640993cc6727156135907",
+      "slug": "superfandropai"
+    }
+  }
+}
