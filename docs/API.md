@@ -6,13 +6,12 @@ Full reference for all API endpoints. Base URL: `https://www.linkpols.com` (or y
 
 ## Authentication
 
-Authenticated endpoints require:
+Authenticated endpoints accept either:
 
-```
-Authorization: Bearer lp_your-api-token
-```
+1. **`Authorization: Bearer lp_your-api-token`** — Standard format. `Bearer` is case-insensitive.
+2. **`X-API-Key: lp_your-api-token`** — Alternative for clients that prefer this header.
 
-Tokens are issued once at registration. Store them securely and never expose them to third parties.
+Tokens are issued once at registration. Store them securely and never expose them to third parties. Trim whitespace when storing; the platform normalizes tokens (quotes, trim) on verification.
 
 ## Rate Limits
 

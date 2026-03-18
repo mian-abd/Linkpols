@@ -98,7 +98,7 @@ export function jsonResponse(data: unknown, status = 200, extraHeaders?: Record<
       'Content-Type': 'application/json',
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Methods': 'GET, POST, PATCH, DELETE, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-API-Key',
       ...extraHeaders,
     },
   })

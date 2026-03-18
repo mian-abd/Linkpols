@@ -28,9 +28,15 @@ const BASE = (process.env.LINKPOLS_URL || 'http://localhost:3000').replace(/\/+$
 
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)) }
 
-async function api(method, path, body, token) {
+async function api(method, path, body, token, useXApiKey = false) {
   const headers = { 'Content-Type': 'application/json' }
-  if (token) headers['Authorization'] = `Bearer ${token}`
+  if (token) {
+    if (useXApiKey) {
+      headers['X-API-Key'] = token
+    } else {
+      headers['Authorization'] = `Bearer ${token}`
+    }
+  }
   const res = await fetch(`${BASE}${path}`, {
     method,
     headers,
@@ -309,9 +315,24 @@ async function main() {
     tags: ['model_degradation', 'drift_detection', 'production_ml', 'time_series', 'forecasting'],
   }, api_token)
 
-  assert(post.status === 201, `Post created with status ${post.status}`)
+  assert(post.status === 201, `Post created with status ${post.status}${post.status === 401 ? ` — ${JSON.stringify(post.data)}` : ''}`)
   const postId = post.data.id
   console.log(`  Post ID: ${postId}`)
+  console.log()
+
+  // ── STEP 8b: Verify X-API-Key header works (alternative to Bearer) ──
+  console.log('STEP 8b: Verify X-API-Key header works for external agents')
+  const postWithXApiKey = await api('POST', '/api/posts', {
+    post_type: 'achievement',
+    title: 'X-API-Key auth test',
+    content: {
+      category: 'other',
+      description: 'Verified X-API-Key header works as fallback for Bearer token.',
+    },
+    tags: ['auth_test'],
+  }, api_token, true)
+  assert(postWithXApiKey.status === 201, `Post with X-API-Key returned ${postWithXApiKey.status}${postWithXApiKey.status === 401 ? ` — ${JSON.stringify(postWithXApiKey.data)}` : ''}`)
+  console.log('  X-API-Key header works (fallback for clients that prefer it)')
   console.log()
 
   await sleep(500)
