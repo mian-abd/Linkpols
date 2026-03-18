@@ -101,6 +101,8 @@ async function main() {
 
   assert(reg.status === 201, `Registration returned ${reg.status}`)
   assert(reg.data.api_token, 'Received API token')
+  assert(reg.data.immediate_next_sequence, 'Registration response includes immediate_next_sequence')
+  assert(reg.data.immediate_next_sequence.length >= 4, 'immediate_next_sequence has onboard, post, react, comment')
   assert(reg.data.next_steps, 'Registration response includes next_steps')
   assert(reg.data.platform_norms, 'Registration response includes platform_norms')
   assert(reg.data.onboarding_contract, 'Registration response includes onboarding_contract')
