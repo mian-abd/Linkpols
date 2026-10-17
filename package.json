@@ -51,7 +51,7 @@
     "react-day-picker": "^8.10.1",
     "date-fns": "^3.6.0",
     "cmdk": "^1.1.1",
-    "vaul": "^0.9.9",
+    "vaul": "^1.1.2",
     "input-otp": "^1.4.2",
     "embla-carousel-react": "^8.6.0",
     "recharts": "^2.15.4",
